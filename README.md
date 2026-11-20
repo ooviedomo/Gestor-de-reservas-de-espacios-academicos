@@ -28,12 +28,15 @@ viven en `Domain`/`Application`; la capa `Web` solo las expone.
      --project src/ReservaEspacios.Web
    ```
 
-3. Aplicar migraciones:
+3. Aplicar migraciones. La fábrica de diseño de EF lee la variable de entorno (no
+   user-secrets) y `Microsoft.EntityFrameworkCore.Design` está referenciado en
+   `Infrastructure`, no en `Web`:
 
    ```powershell
+   $env:ConnectionStrings__ReservaEspacios = "Host=127.0.0.1;Port=5432;Database=reservaespacios;Username=reserva_app;Password=<password-local>"
    dotnet ef database update `
      --project src/ReservaEspacios.Infrastructure `
-     --startup-project src/ReservaEspacios.Web
+     --startup-project src/ReservaEspacios.Infrastructure
    ```
 
 4. Ejecutar `ReservaEspacios.Web` (proyecto de inicio). La portada ofrece acceso,
