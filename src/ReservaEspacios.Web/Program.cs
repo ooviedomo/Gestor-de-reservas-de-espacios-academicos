@@ -1,9 +1,12 @@
 using Microsoft.AspNetCore.Identity;
 using ReservaEspacios.Application;
+using ReservaEspacios.Application.Auditoria;
 using ReservaEspacios.Application.Common;
 using ReservaEspacios.Application.Disponibilidad;
+using ReservaEspacios.Application.Reportes;
 using ReservaEspacios.Infrastructure;
 using ReservaEspacios.Infrastructure.Identity;
+using ReservaEspacios.Infrastructure.Notificaciones;
 using ReservaEspacios.Infrastructure.Persistence;
 using ReservaEspacios.Web;
 using ReservaEspacios.Web.BackgroundServices;
@@ -23,6 +26,9 @@ var connectionString = builder.Configuration.GetConnectionString("ReservaEspacio
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(connectionString);
+
+// NOT-002: configuración SMTP desde variables de entorno sin secretos versionados.
+builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection("Correo:Smtp"));
 
 // USR-001/003: el email es el nombre de usuario y la directiva de contraseña
 // coincide con CONTRASENA_DEBIL (8 caracteres, mayúscula y número).
@@ -49,6 +55,12 @@ builder.Services.AddScoped<ISesionWeb, SesionWeb>();
 builder.Services.Configure<CierreAutomaticoOptions>(
     builder.Configuration.GetSection("Reservas:CierreAutomatico"));
 builder.Services.AddHostedService<CerrarReservasVencidasWorker>();
+
+// NOT-001/002/003: envío diferido del outbox. Los tick's no procesan notificaciones
+// al arrancar, igual que el cierre automático.
+builder.Services.Configure<NotificacionesOptions>(
+    builder.Configuration.GetSection("Notificaciones"));
+builder.Services.AddHostedService<NotificacionesWorker>();
 
 var app = builder.Build();
 

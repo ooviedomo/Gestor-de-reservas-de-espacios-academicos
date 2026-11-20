@@ -30,6 +30,14 @@
         {
             <li><a href="/administracion/espacios">Administrar espacios</a></li>
         }
+        @if (Autenticado && Permisos.PuedeConsultarAuditoria(Rol))
+        {
+            <li><a href="/auditoria">Consultar auditoría</a></li>
+        }
+        @if (Autenticado && Permisos.PuedeConsultarReportes(Rol))
+        {
+            <li><a href="/reportes/ocupacion">Reporte de ocupación</a></li>
+        }
     </ul>
 </section>
 

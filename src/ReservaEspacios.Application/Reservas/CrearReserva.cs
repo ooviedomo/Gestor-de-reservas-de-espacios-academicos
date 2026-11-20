@@ -27,7 +27,8 @@ public sealed class CrearReserva(
     CadenaValidacionCrearReserva validadores,
     ValidadorSolape revalidador,
     GuardiaOperacionesProtegidas guardia,
-    IUsuarioActual usuarioActual) : ICommandHandler<CrearReservaCommand, Guid>
+    IUsuarioActual usuarioActual,
+    IDomainEventDispatcher? eventos = null) : ICommandHandler<CrearReservaCommand, Guid>
 {
     public async Task<Result<Guid>> HandleAsync(
         CrearReservaCommand command,
@@ -78,6 +79,14 @@ public sealed class CrearReserva(
                     command.Asistentes);
 
                 await repository.AddAsync(reserva, token);
+                // AUD-001: la auditoría del alta comparte la transacción SERIALIZABLE.
+                // NOT-001: ReservaCreada no genera correo; el outbox solo reacciona a
+                // aprobación, rechazo y cancelación.
+                await (eventos ?? NullDomainEventDispatcher.Instancia).PublicarAsync(
+                    new ReservaCreada(
+                        reserva.Id, reserva.SpaceId, reserva.UsuarioId, usuarioId,
+                        usuarioActual.Rol, reserva.Inicio, reserva.Fin, reserva.CreadoEn),
+                    token);
             }, cancellationToken);
 
             return Result<Guid>.Success(reserva!.Id);

@@ -154,7 +154,7 @@ public sealed class IdentityUsuarioService(
             ?? Rol.Solicitante;
 
         return Result<DatosActorDto?>.Success(
-            new DatosActorDto(usuario.Id, usuario.Nombre, rol));
+            new DatosActorDto(usuario.Id, usuario.Nombre, rol, usuario.Email ?? string.Empty));
     }
 
     private async Task<UsuarioSesionDto> SesionAsync(ApplicationUser usuario)

@@ -1,6 +1,8 @@
+using ReservaEspacios.Application.Auditoria;
 using ReservaEspacios.Application.Common;
 using ReservaEspacios.Application.Disponibilidad;
 using ReservaEspacios.Application.Espacios;
+using ReservaEspacios.Application.Reportes;
 
 namespace ReservaEspacios.Application.Facade;
 
@@ -16,5 +18,13 @@ public interface IReservaEspaciosFacade
 
     Task<Result<DisponibilidadDto>> ConsultarDisponibilidad(
         ConsultarDisponibilidadCommand command,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<IReadOnlyList<AuditoriaDto>>> ConsultarAuditoria(
+        FiltroAuditoria filtro,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<ReporteOcupacionDto>> GenerarReporte(
+        FiltroReporte filtro,
         CancellationToken cancellationToken = default);
 }

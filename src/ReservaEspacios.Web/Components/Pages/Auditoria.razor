@@ -1,0 +1,114 @@
+@page "/auditoria"
+@rendermode InteractiveServer
+@using ReservaEspacios.Application.Auditoria
+@using ReservaEspacios.Application.Autorizacion
+@using ReservaEspacios.Application.Common
+@using ReservaEspacios.Application.Facade
+@using ReservaEspacios.Domain.Common
+@inject IReservaEspaciosFacade Facade
+@inject IEvaluadorPermisos Permisos
+@inject IUsuarioActual Actual
+
+<PageTitle>Auditoría</PageTitle>
+
+<h1>Auditoría</h1>
+
+@if (!Permisos.PuedeConsultarAuditoria(Actual.Rol))
+{
+    <p data-testid="error">@DomainErrors.NoAutorizado</p>
+}
+else
+{
+    <div id="filtros-auditoria">
+        <label for="entidad">Entidad</label>
+        <input id="entidad" value="@entidad"
+               @onchange="@(e => entidad = e.Value?.ToString() ?? string.Empty)" />
+
+        <label for="actorId">Actor</label>
+        <input id="actorId" value="@actorId"
+               @onchange="@(e => actorId = e.Value?.ToString() ?? string.Empty)" />
+
+        <label for="desde">Desde</label>
+        <input id="desde" value="@desde"
+               @onchange="@(e => desde = e.Value?.ToString() ?? string.Empty)" />
+
+        <label for="hasta">Hasta</label>
+        <input id="hasta" value="@hasta"
+               @onchange="@(e => hasta = e.Value?.ToString() ?? string.Empty)" />
+
+        <button id="filtrar-auditoria" @onclick="CargarAsync">Filtrar</button>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Entidad</th>
+                <th>Identificador</th>
+                <th>Acción</th>
+                <th>Actor</th>
+                <th>Rol del actor</th>
+                <th>Fecha</th>
+                <th>Detalle</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var fila in filas)
+            {
+                <tr data-testid="fila-auditoria">
+                    <td>@fila.Entidad</td>
+                    <td>@fila.EntidadId</td>
+                    <td data-testid="accion">@fila.Accion</td>
+                    <td data-testid="actor">@(fila.ActorNombre ?? "Sistema")</td>
+                    <td>@(fila.ActorRol ?? "Sistema")</td>
+                    <td>@fila.OcurridoEn</td>
+                    <td>@(fila.Metadata ?? "—")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    @if (mensajeError is not null)
+    {
+        <p data-testid="error-consulta">@mensajeError</p>
+    }
+}
+
+@code {
+    private string entidad = string.Empty;
+    private string actorId = string.Empty;
+    private string desde = string.Empty;
+    private string hasta = string.Empty;
+    private IReadOnlyList<AuditoriaDto> filas = Array.Empty<AuditoriaDto>();
+    private string? mensajeError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Permisos.PuedeConsultarAuditoria(Actual.Rol))
+        {
+            await CargarAsync();
+        }
+    }
+
+    private async Task CargarAsync()
+    {
+        var filtro = new FiltroAuditoria(
+            string.IsNullOrWhiteSpace(entidad) ? null : entidad.Trim(),
+            Guid.TryParse(actorId, out var id) ? id : null,
+            ParsearFecha(desde),
+            ParsearFecha(hasta));
+        var resultado = await Facade.ConsultarAuditoria(filtro);
+
+        if (resultado.IsSuccess)
+        {
+            filas = resultado.Value ?? Array.Empty<AuditoriaDto>();
+            mensajeError = null;
+        }
+        else
+        {
+            mensajeError = resultado.ErrorCode;
+        }
+    }
+
+    private static DateTimeOffset? ParsearFecha(string valor) =>
+        DateTimeOffset.TryParse(valor, out var fecha) ? fecha : null;
+}

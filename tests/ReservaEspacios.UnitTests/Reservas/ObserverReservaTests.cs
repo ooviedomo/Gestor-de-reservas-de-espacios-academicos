@@ -2,9 +2,13 @@ using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using ReservaEspacios.Application;
+using ReservaEspacios.Application.Auditoria;
 using ReservaEspacios.Application.Autorizacion;
 using ReservaEspacios.Application.Common;
+using ReservaEspacios.Application.Espacios;
+using ReservaEspacios.Application.Notificaciones;
 using ReservaEspacios.Application.Reservas;
+using ReservaEspacios.Application.Usuarios;
 using ReservaEspacios.Domain.Common;
 using ReservaEspacios.Domain.Reservas;
 using ReservaEspacios.Domain.Usuarios;
@@ -113,16 +117,26 @@ public sealed class ObserverReservaTests
     }
 
     [Fact]
-    public void TC_OBS_005_Application_resuelve_el_despachador_sin_suscriptores()
+    public void TC_OBS_005_Application_resuelve_el_despachador_con_auditoria_y_outbox()
     {
         var servicios = new ServiceCollection();
         servicios.AddApplication();
+        servicios.AddSingleton(Mock.Of<IAuditoriaRepository>());
+        servicios.AddSingleton(Mock.Of<IReservaRepository>());
+        servicios.AddSingleton(Mock.Of<ISpaceRepository>());
+        servicios.AddSingleton(Mock.Of<IUsuarioIdentityService>());
+        servicios.AddSingleton(Mock.Of<INotificacionRepository>());
         using var proveedor = servicios.BuildServiceProvider();
         using var scope = proveedor.CreateScope();
 
         var despachador = scope.ServiceProvider.GetRequiredService<IDomainEventDispatcher>();
+        var suscriptores = scope.ServiceProvider
+            .GetServices<IDomainEventSubscriber>().ToList();
 
         despachador.Should().BeOfType<DomainEventDispatcher>();
+        suscriptores.Should().HaveCount(2);
+        suscriptores.Should().ContainItemsAssignableTo<AuditoriaHandler>();
+        suscriptores.Should().ContainItemsAssignableTo<NotificacionOutboxHandler>();
     }
 
     private void DadoQueExiste(Reservation reserva) =>

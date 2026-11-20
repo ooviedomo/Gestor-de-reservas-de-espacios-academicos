@@ -379,6 +379,130 @@ namespace ReservaEspacios.Infrastructure.Persistence.Migrations
                     b.ToTable("users", (string)null);
                 });
 
+            modelBuilder.Entity("ReservaEspacios.Infrastructure.Persistence.AuditLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Accion")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("accion");
+
+                    b.Property<Guid?>("ActorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("actor_id");
+
+                    b.Property<string>("ActorRol")
+                        .HasColumnType("text")
+                        .HasColumnName("actor_rol");
+
+                    b.Property<string>("Entidad")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("entidad");
+
+                    b.Property<Guid>("EntidadId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("entidad_id");
+
+                    b.Property<string>("Metadata")
+                        .HasColumnType("text")
+                        .HasColumnName("metadata");
+
+                    b.Property<DateTimeOffset>("OcurridoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ocurrido_en");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActorId")
+                        .HasDatabaseName("ix_audit_logs_actor_id");
+
+                    b.HasIndex("Entidad")
+                        .HasDatabaseName("ix_audit_logs_entidad");
+
+                    b.HasIndex("EntidadId")
+                        .HasDatabaseName("ix_audit_logs_entidad_id");
+
+                    b.HasIndex("OcurridoEn")
+                        .HasDatabaseName("ix_audit_logs_ocurrido_en");
+
+                    b.ToTable("audit_logs", (string)null);
+                });
+
+            modelBuilder.Entity("ReservaEspacios.Infrastructure.Persistence.Notificacion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Asunto")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("asunto");
+
+                    b.Property<string>("Canal")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("canal");
+
+                    b.Property<DateTimeOffset>("CreadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("creado_en");
+
+                    b.Property<string>("Cuerpo")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("cuerpo");
+
+                    b.Property<string>("Destinatario")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("destinatario");
+
+                    b.Property<DateTimeOffset?>("EnviadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("enviado_en");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("estado");
+
+                    b.Property<int>("Intentos")
+                        .HasColumnType("integer")
+                        .HasColumnName("intentos");
+
+                    b.Property<DateTimeOffset?>("ProximoIntentoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("proximo_intento_en");
+
+                    b.Property<Guid>("ReservaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("reserva_id");
+
+                    b.Property<string>("UltimoError")
+                        .HasColumnType("text")
+                        .HasColumnName("ultimo_error");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Estado")
+                        .HasDatabaseName("ix_notifications_estado");
+
+                    b.HasIndex("ProximoIntentoEn")
+                        .HasDatabaseName("ix_notifications_proximo_intento");
+
+                    b.HasIndex("ReservaId")
+                        .HasDatabaseName("ix_notifications_reserva_id");
+
+                    b.ToTable("notifications", (string)null);
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
                 {
                     b.HasOne("ReservaEspacios.Infrastructure.Identity.ApplicationRole", null)

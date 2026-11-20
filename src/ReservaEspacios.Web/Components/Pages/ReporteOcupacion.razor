@@ -1,0 +1,105 @@
+@page "/reportes/ocupacion"
+@rendermode InteractiveServer
+@using ReservaEspacios.Application.Autorizacion
+@using ReservaEspacios.Application.Common
+@using ReservaEspacios.Application.Facade
+@using ReservaEspacios.Application.Reportes
+@using ReservaEspacios.Domain.Common
+@inject IReservaEspaciosFacade Facade
+@inject IEvaluadorPermisos Permisos
+@inject IUsuarioActual Actual
+
+<PageTitle>Reporte de ocupación</PageTitle>
+
+<h1>Reporte de ocupación</h1>
+
+@if (!Permisos.PuedeConsultarReportes(Actual.Rol))
+{
+    <p data-testid="error">@DomainErrors.NoAutorizado</p>
+}
+else
+{
+    <div id="filtros-reporte">
+        <label for="spaceId">Espacio</label>
+        <input id="spaceId" value="@spaceId"
+               @onchange="@(e => spaceId = e.Value?.ToString() ?? string.Empty)" />
+
+        <label for="desde">Desde</label>
+        <input id="desde" value="@desde"
+               @onchange="@(e => desde = e.Value?.ToString() ?? string.Empty)" />
+
+        <label for="hasta">Hasta</label>
+        <input id="hasta" value="@hasta"
+               @onchange="@(e => hasta = e.Value?.ToString() ?? string.Empty)" />
+
+        <button id="generar-reporte" @onclick="CargarAsync">Generar</button>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Espacio</th>
+                <th>Reservas</th>
+                <th>Horas reservadas</th>
+                <th>Horas disponibles</th>
+                <th>Ocupación</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var fila in filas)
+            {
+                <tr data-testid="fila-reporte">
+                    <td>@fila.Espacio</td>
+                    <td data-testid="reservas">@fila.Reservas</td>
+                    <td data-testid="horas-reservadas">@fila.HorasReservadas</td>
+                    <td data-testid="horas-disponibles">@fila.HorasDisponibles</td>
+                    <td data-testid="porcentaje">@fila.PorcentajeOcupacion %</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    @if (mensajeError is not null)
+    {
+        <p data-testid="error-consulta">@mensajeError</p>
+    }
+}
+
+@code {
+    private string spaceId = string.Empty;
+    private string desde = DateTimeOffset.UtcNow.AddMonths(-1).ToString("yyyy-MM-dd");
+    private string hasta = DateTimeOffset.UtcNow.ToString("yyyy-MM-dd");
+    private IReadOnlyList<DetalleOcupacionDto> filas = Array.Empty<DetalleOcupacionDto>();
+    private string? mensajeError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Permisos.PuedeConsultarReportes(Actual.Rol))
+        {
+            await CargarAsync();
+        }
+    }
+
+    private async Task CargarAsync()
+    {
+        var filtro = new ReporteBuilder()
+            .ParaEspacio(Guid.TryParse(spaceId, out var id) ? id : null)
+            .Desde(ParsearFecha(desde) ?? DateTimeOffset.UtcNow.AddMonths(-1))
+            .Hasta(ParsearFecha(hasta) ?? DateTimeOffset.UtcNow)
+            .Build();
+        var resultado = await Facade.GenerarReporte(filtro);
+
+        if (resultado.IsSuccess)
+        {
+            filas = resultado.Value?.Espacios ?? Array.Empty<DetalleOcupacionDto>();
+            mensajeError = null;
+        }
+        else
+        {
+            mensajeError = resultado.ErrorCode;
+        }
+    }
+
+    private static DateTimeOffset? ParsearFecha(string valor) =>
+        DateTimeOffset.TryParse(valor, out var fecha) ? fecha : null;
+}

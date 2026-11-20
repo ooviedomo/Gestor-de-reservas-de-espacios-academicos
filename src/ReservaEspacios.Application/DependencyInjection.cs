@@ -1,9 +1,12 @@
 using Microsoft.Extensions.DependencyInjection;
+using ReservaEspacios.Application.Auditoria;
 using ReservaEspacios.Application.Autorizacion;
 using ReservaEspacios.Application.Common;
 using ReservaEspacios.Application.Disponibilidad;
 using ReservaEspacios.Application.Espacios;
 using ReservaEspacios.Application.Facade;
+using ReservaEspacios.Application.Notificaciones;
+using ReservaEspacios.Application.Reportes;
 using ReservaEspacios.Application.Reservas;
 using ReservaEspacios.Application.Reservas.Validacion;
 using ReservaEspacios.Application.Usuarios;
@@ -19,9 +22,10 @@ public static class DependencyInjection
         // de espacios (AUTH-001/003). Los casos de uso concretos siguen sin conocer
         // quién los invoca, por lo que sus pruebas unitarias no cambian.
         services.AddScoped<IEvaluadorPermisos, EvaluadorPermisos>();
-        // Observer (ADR-002): el despachador se registra aunque este change aún no tenga
-        // suscriptores concretos; auditoría y outbox se añadirán en el tercer change.
+        // Observer (ADR-002): auditoría y outbox reaccionan a los eventos de dominio.
         services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
+        services.AddScoped<IDomainEventSubscriber, AuditoriaHandler>();
+        services.AddScoped<IDomainEventSubscriber, NotificacionOutboxHandler>();
         services.AddScoped<GuardiaOperacionesProtegidas>();
         services.AddScoped<RegistrarSpace>();
         services.AddScoped<EditarSpace>();
@@ -79,6 +83,21 @@ public static class DependencyInjection
         services.AddScoped<
             ICommandHandler<RegistrarSolicitanteCommand, Guid>,
             RegistrarSolicitante>();
+
+        // Auditoría (AUD-001/002) y consulta restringida.
+        services.AddScoped<ConsultarAuditoria>();
+        services.AddScoped<EliminarAuditoria>();
+
+        // Outbox de correo (NOT-001/002/003): Command, Strategy y Adapter.
+        services.AddScoped<EnviarCorreoHandler>();
+        services.AddScoped<ICommandHandler<EnviarCorreoCommand>, EnviarCorreoHandler>();
+        services.AddScoped<IRetryBackoff, BackoffExponencial>();
+        services.AddScoped<IProcesadorNotificaciones, ProcesadorNotificaciones>();
+
+        // Reporte de ocupación (REP-001/002/003): Builder + Strategy.
+        services.AddScoped<ReporteBuilder>();
+        services.AddScoped<ICalculoOcupacion, CalculoOcupacion>();
+        services.AddScoped<ConsultarReporteOcupacion>();
         return services;
     }
 }

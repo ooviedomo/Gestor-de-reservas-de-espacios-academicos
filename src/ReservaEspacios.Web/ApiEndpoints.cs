@@ -1,6 +1,8 @@
+using ReservaEspacios.Application.Auditoria;
 using ReservaEspacios.Application.Autorizacion;
 using ReservaEspacios.Application.Common;
 using ReservaEspacios.Application.Espacios;
+using ReservaEspacios.Application.Reportes;
 using ReservaEspacios.Application.Reservas;
 using ReservaEspacios.Application.Usuarios;
 using ReservaEspacios.Domain.Common;
@@ -11,9 +13,8 @@ namespace ReservaEspacios.Web;
 
 /// <summary>
 /// Endpoints HTTP del change. Las reglas de autorización viven en
-/// <see cref="IEvaluadorPermisos"/> y en los guards de Application, no aquí.
-/// Los endpoints todavía no implementados devuelven 501 después de pasar el guard,
-/// para que la matriz de AUTH-001/002/003 sea verificable desde el inicio.
+/// <see cref="IEvaluadorPermisos"/> y en los guards de Application, no aquí. Incluye
+/// la consulta de auditoría (AUD-002) y el reporte de ocupación (REP-001/002).
 /// </summary>
 public static class ApiEndpoints
 {
@@ -172,20 +173,37 @@ public static class ApiEndpoints
                 : Error(resultado.ErrorCode);
         });
 
-        app.MapGet("/api/auditoria", (GuardiaOperacionesProtegidas guardia) =>
+        app.MapGet("/api/auditoria", async (
+            string? entidad,
+            Guid? actorId,
+            DateTimeOffset? desde,
+            DateTimeOffset? hasta,
+            ConsultarAuditoria consultar,
+            CancellationToken cancellationToken) =>
         {
-            var verificacion = guardia.VerificarAuditoria();
-            return !verificacion.IsSuccess
-                ? Error(verificacion.ErrorCode)
-                : NotImplemented("La auditoría se incorpora en el siguiente change.");
+            var filtro = new FiltroAuditoria(entidad, actorId, desde, hasta);
+            var resultado = await consultar.HandleAsync(filtro, cancellationToken);
+            return resultado.IsSuccess
+                ? Results.Ok(resultado.Value)
+                : Error(resultado.ErrorCode);
         });
 
-        app.MapGet("/api/reportes/ocupacion", (GuardiaOperacionesProtegidas guardia) =>
+        app.MapGet("/api/reportes/ocupacion", async (
+            Guid? spaceId,
+            DateTimeOffset? desde,
+            DateTimeOffset? hasta,
+            ConsultarReporteOcupacion consultar,
+            CancellationToken cancellationToken) =>
         {
-            var verificacion = guardia.VerificarReportes();
-            return !verificacion.IsSuccess
-                ? Error(verificacion.ErrorCode)
-                : NotImplemented("Los reportes se incorporan en el siguiente change.");
+            var filtro = new ReporteBuilder()
+                .Desde(desde ?? DateTimeOffset.UtcNow.AddMonths(-1))
+                .Hasta(hasta ?? DateTimeOffset.UtcNow)
+                .ParaEspacio(spaceId)
+                .Build();
+            var resultado = await consultar.HandleAsync(filtro, cancellationToken);
+            return resultado.IsSuccess
+                ? Results.Ok(resultado.Value)
+                : Error(resultado.ErrorCode);
         });
 
         return app;
@@ -201,9 +219,6 @@ public static class ApiEndpoints
             _ => StatusCodes.Status400BadRequest
         });
 
-    private static IResult NotImplemented(string mensaje) => Results.Json(
-        new { mensaje },
-        statusCode: StatusCodes.Status501NotImplemented);
 }
 
 /// <summary>Cuerpo de la cancelación: el identificador viaja en la ruta (tarea 3.4).</summary>

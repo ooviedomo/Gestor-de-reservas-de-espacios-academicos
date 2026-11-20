@@ -25,4 +25,7 @@ public static class DomainErrors
     public const string MotivoObligatorio = "MOTIVO_OBLIGATORIO";
     public const string ReservaNoEncontrada = "RESERVA_NO_ENCONTRADA";
     public const string UsuarioNoEncontrado = "USUARIO_NO_ENCONTRADO";
+
+    // add-notificaciones-auditoria-y-reportes: NOT-*, AUD-* y REP-*.
+    public const string AuditoriaInmutable = "AUDITORIA_INMUTABLE";
 }

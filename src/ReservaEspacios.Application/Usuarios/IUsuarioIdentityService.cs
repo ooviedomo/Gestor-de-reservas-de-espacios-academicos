@@ -11,8 +11,11 @@ public sealed record UsuarioSesionDto(
     Rol Rol,
     bool Activo);
 
-/// <summary>RES-004: identidad mínima para mostrar solicitante y actor en el historial.</summary>
-public sealed record DatosActorDto(Guid Id, string Nombre, Rol Rol);
+/// <summary>
+/// RES-004: identidad mínima para mostrar solicitante y actor en el historial. El email
+/// se añade sin romper las construcciones existentes para resolver el destino del outbox.
+/// </summary>
+public sealed record DatosActorDto(Guid Id, string Nombre, Rol Rol, string Email = "");
 
 public sealed record CrearUsuarioCommand(
     string Nombre,

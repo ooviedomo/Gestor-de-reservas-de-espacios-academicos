@@ -24,6 +24,14 @@
     {
         <NavLink href="/administracion/espacios">Administrar espacios</NavLink>
     }
+    @if (Autenticado && Permisos.PuedeConsultarAuditoria(Rol))
+    {
+        <NavLink href="/auditoria">Auditoría</NavLink>
+    }
+    @if (Autenticado && Permisos.PuedeConsultarReportes(Rol))
+    {
+        <NavLink href="/reportes/ocupacion">Reporte de ocupación</NavLink>
+    }
 
     <span class="nav-menu__espaciador"></span>
 

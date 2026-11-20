@@ -1,7 +1,7 @@
 # Registro de uso de IA
 
 - **Proyecto:** `ReservaEspacios`
-- **Alcance:** fases 2 y 3 (revisión de especificaciones, implementación asistida y cierre del change `add-reservas-y-aprobaciones`) y change `add-interfaz-de-acceso-y-navegacion`
+- **Alcance:** fases 2 y 3 (revisión de especificaciones, implementación asistida y cierre del change `add-reservas-y-aprobaciones`), change `add-interfaz-de-acceso-y-navegacion` y change `add-notificaciones-auditoria-y-reportes`
 - **Base:** `PLAN_INGENIERIA.md` §6.3–6.5. Este documento **no modifica** el plan; las decisiones nuevas están en `docs/adr/` y en el `design.md` del change.
 - **Estado:** aprobación del estudiante **PENDIENTE** (ver §4).
 
@@ -28,6 +28,11 @@ Los prompts siguientes son **representativos**: parafrasean las instrucciones re
 | P-15 | Interfaz / arranque | «Documenta el arranque local y crea los tres roles sin versionar credenciales» | `tools/ReservaEspacios.Bootstrap`, `README.md` | Variables `BOOTSTRAP_*_EMAIL/PASSWORD`; compilación con 0 errores |
 | P-16 | Interfaz / cierre | «Genera la matriz de trazabilidad del change de interfaz y actualiza el registro de uso de IA» | `docs/TRAZABILIDAD-INTERFAZ-ACCESO.md`, este documento | 286 pruebas; cobertura 94.3%; `openspec validate --all --strict` |
 | P-17 | Interfaz / robustez | «Evita que un fallo al cargar el catálogo derribe el circuito InteractiveServer y muestra un mensaje sin SQL» | `try/catch` en `ConsultarDisponibilidadPage.OnInitializedAsync` y `TC_DISP_001_Componente_muestra_mensaje_si_el_catalogo_falla` | 287 pruebas; cobertura 94.2% |
+| P-18 | Notificaciones / spec | «Ajusta el plan de notificaciones para que solo `APROBADA`, `RECHAZADA` y `CANCELADA` generen correo, con outbox y reintentos, sin añadir dependencias» | `openspec/changes/add-notificaciones-auditoria-y-reportes/` (`NOT-001/002/003`, `AUD-001/002`, `REP-001/002/003`), `design.md` | `openspec validate ... --strict`; ADR-001/002/003 como fuente de decisiones |
+| P-19 | Notificaciones / persistencia | «Crea `notifications` con `ultimo_error` y `audit_logs` append-only, con índices y trigger en PostgreSQL local» | Migración `20261120162035_NotificacionesAuditoriaYReportes.cs`, `Notificacion`, `AuditLog`, `TransaccionEventos` | `TC_NOT_001_*`, `TC_AUD_001_Update_y_delete_*`; migración aplicada en `reservaespacios_test` y `reservaespacios` |
+| P-20 | Notificaciones / worker | «Separa el envío SMTP de la transacción: outbox en el caso de uso y `IHostedService` con reintentos y proveedor falso en pruebas» | `NotificacionOutboxHandler`, `ProcesadorNotificaciones`, `NotificacionesWorker`, `BackoffExponencial`, `SmtpEmailSender` | `TC_NOT_002_*` y `TC_NOT_003_*` unitarias e integración; reserva aprobada intacta con SMTP caído |
+| P-21 | Auditoría y reportes | «Registra quién, cuándo y sobre qué entidad; configura la consulta filtrable y calcula ocupación por espacio con días naturales y unión de intervalos» | `AuditoriaHandler`, `AuditoriaRepository`, `CalculoOcupacion`, `RepositorioOcupacion`, endpoints `/api/auditoria` y `/api/reportes/ocupacion` | `TC_AUD_001_*`, `TC_AUD_002_*`, `TC_REP_001_*`, `TC_REP_003_*` |
+| P-22 | UI / cierre | «Añade las vistas de auditoría y reporte, verifica el menú por roles y genera la matriz de trazabilidad del change» | `Auditoria.razor`, `ReporteOcupacion.razor`, `AuditoriaYReportesUITests.cs`, `docs/TRAZABILIDAD-NOTIFICACIONES-AUDITORIA-REPORTES.md` | 48 pruebas bUnit; 54 nombres de prueba verificados; cobertura 95.1% |
 
 ## 2. Salidas rechazadas o corregidas durante la revisión
 
@@ -44,18 +49,24 @@ Los prompts siguientes son **representativos**: parafrasean las instrucciones re
 | `CrearUsuarioPrivilegiadoCommand` para el primer administrador del bootstrap | El guard exige un administrador previo, que aún no existe | El primer administrador y el coordinador se crean vía `IUsuarioIdentityService`; el solicitante usa el comando |
 | `record UsuarioDePrueba(Rol? Rol)` en bUnit | El parámetro primary-constructor chocaba con la propiedad `Rol` | Renombrado a `RolSesion` |
 | Fusión de cobertura con archivos separados por espacio | ReportGenerator solo procesó un archivo y dio 82.6% | Lista separada por `;`; cobertura real 94.3% |
+| `AuditoriaHandler` serializaba metadata con `\u00f3` | El motivo «mantención» aparecía ilegible en la vista | `JavaScriptEncoder.Create(UnicodeRanges.All)`; Razor codifica el HTML al mostrarlo |
+| Prueba de cambio de rol construida con `new CambiarRolUsuario(identity, usuario)` | El parámetro opcional `eventos` quedó nulo y no se publicó `RolCambiado` | Resolver el caso de uso por DI con sesión de administrador |
+| `TC_OBS_005` sin `IReservaRepository` en el contenedor de pruebas | Fallo de resolución del `NotificacionOutboxHandler` | Registrar `Mock<IReservaRepository>` en el contenedor |
+| Expectativa de auditoría vacía en `AutorizacionTests` | Otras pruebas de la misma clase siembran registros en el esquema | Comprobar que la consulta devuelve historial no vacío |
+| Aserciones bUnit con decimales y fechas literales | Cultura `es` (`1,5`) y zona local (`-5h`) rompían las pruebas | Usar `ToString()` de la cultura actual y comparar la fecha local |
+| `design.md` afirmaba que solo se concedían `GRANT INSERT/SELECT` | La migración usa `REVOKE ... FROM PUBLIC` y trigger porque el usuario es propietario | Alinear el `design.md` con la migración sin editar `PLAN_INGENIERIA.md` |
 
 ## 3. Verificación global aplicada a todo el código generado
 
-- **Revisión humana del diff** antes de cada commit (`5455661`, `2cf104b`, `35346fb`, `725c2ce`, `9be23f4`, `0a6f902`, `a45b2b3` y los del change de interfaz).
-- `dotnet build ReservaEspacios.sln`: 0 advertencias, 0 errores.
-- `dotnet format ReservaEspacios.sln --verify-no-changes`: sin cambios.
-- `dotnet test ReservaEspacios.sln`: **287** pruebas superadas (169 unitarias, 36 bUnit, 82 integración).
-- Cobertura de líneas consolidada: **94.2%** (3567/3783), por encima del umbral del 80% de la tarea 5.1.
-- `openspec validate add-reservas-y-aprobaciones --strict` y `openspec validate add-interfaz-de-acceso-y-navegacion --strict`: válidos.
-- Migraciones de EF Core revisadas: `btree_gist`, `EXCLUDE ... WHERE estado IN ('PENDIENTE','APROBADA')`, columnas `asistentes`, `motivo_rechazo`, `completado_en`.
+- **Revisión humana del diff** antes de cada commit (`5455661`, `2cf104b`, `35346fb`, `725c2ce`, `9be23f4`, `0a6f902`, `a45b2b3`, los del change de interfaz y los del change actual).
+- `dotnet build`: 0 advertencias, 0 errores.
+- `dotnet format --verify-no-changes --no-restore`: sin cambios.
+- `dotnet test`: **353** pruebas superadas (211 unitarias, 48 bUnit, 94 integración).
+- Cobertura de líneas consolidada (coverlet + ReportGenerator): **95.1%** (5127/5390), por encima del umbral del 80% de la tarea 5.1.
+- `openspec validate add-reservas-y-aprobaciones --strict`, `openspec validate add-interfaz-de-acceso-y-navegacion --strict` y `openspec validate add-notificaciones-auditoria-y-reportes --strict`: válidos.
+- Migraciones de EF Core revisadas: `btree_gist`, `EXCLUDE ... WHERE estado IN ('PENDIENTE','APROBADA')`, columnas `asistentes`, `motivo_rechazo`, `completado_en`, `ultimo_error`, índices de auditoría y trigger `audit_logs_inmutable`.
 - Dependencias: sin paquetes añadidos a la stack del plan §3.2.
-- Trazabilidad requisito → prueba: `docs/TRAZABILIDAD-ESPACIOS-DISPONIBILIDAD.md`, `docs/TRAZABILIDAD-RESERVAS-APROBACIONES.md` y `docs/TRAZABILIDAD-INTERFAZ-ACCESO.md`.
+- Trazabilidad requisito → prueba: `docs/TRAZABILIDAD-ESPACIOS-DISPONIBILIDAD.md`, `docs/TRAZABILIDAD-RESERVAS-APROBACIONES.md`, `docs/TRAZABILIDAD-INTERFAZ-ACCESO.md` y `docs/TRAZABILIDAD-NOTIFICACIONES-AUDITORIA-REPORTES.md`.
 - Flujo local verificado con PostgreSQL 19 en `127.0.0.1:5432` (ADR-003), sin Docker.
 
 ## 4. Aprobación del estudiante — PENDIENTE
@@ -70,6 +81,9 @@ De acuerdo con `PLAN_INGENIERIA.md` §6.5, la aprobación de especificaciones, r
 - [ ] He revisado el diff del change `add-interfaz-de-acceso-y-navegacion`.
 - [ ] Acepto que la portada, el menú y el bootstrap se implementaron sin nuevas dependencias y con cobertura superior al 80%.
 - [ ] Autorizo archivar `add-interfaz-de-acceso-y-navegacion`.
+- [ ] He revisado el diff del change `add-notificaciones-auditoria-y-reportes`.
+- [ ] Acepto el outbox, el trigger de auditoría, el reporte de ocupación y las nuevas vistas.
+- [ ] Autorizo archivar `add-notificaciones-auditoria-y-reportes`.
 
 **Nombre del estudiante:** ______________________________________
 

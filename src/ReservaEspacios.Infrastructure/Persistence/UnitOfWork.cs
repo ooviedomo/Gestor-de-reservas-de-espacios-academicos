@@ -14,6 +14,15 @@ public sealed class UnitOfWork(ReservaEspaciosDbContext context) : IUnitOfWork
             return await context.SaveChangesAsync(cancellationToken);
         }
         catch (DbUpdateException exception) when (
+            exception.InnerException is PostgresException postgres &&
+            postgres.Message.Contains("AUDITORIA_INMUTABLE", StringComparison.Ordinal))
+        {
+            throw new DomainException(
+                DomainErrors.AuditoriaInmutable,
+                "El registro de auditoría es de solo inserción.",
+                exception);
+        }
+        catch (DbUpdateException exception) when (
             exception.InnerException is PostgresException { SqlState: "23505" })
         {
             // Última línea de defensa: carrera entre dos altas con el mismo nombre.

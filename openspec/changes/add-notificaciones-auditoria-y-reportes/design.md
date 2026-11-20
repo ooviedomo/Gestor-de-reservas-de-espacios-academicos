@@ -24,7 +24,7 @@ Nota de alcance: el plan §1.2 pide "notificar sobre el estado", pero se notific
 - **Patrón outbox con `IHostedService`.** El caso de uso inserta en `notifications` dentro de la misma transacción que cambia el estado, de modo que reserva y notificación se confirman o se rechazan juntas; el envío y sus reintentos los hace un worker independiente, y su fallo nunca revierte la reserva. Alternativa descartada: llamar al SMTP desde el caso de uso, que acopla latencia y fallos externos a la reserva.
 - **Columna `ultimo_error` en `notifications`.** El esquema del plan §3.3 no contempla dónde guardar el motivo de un envío fallido; se añade `ultimo_error` para cumplir `NOT-002`. Alternativa descartada: registrar el error solo en logs de aplicación, que no permite inspeccionar la notificación.
 - **Reintentos con límite de 5 intentos y error final.** El worker incrementa `intentos` y usa retroceso exponencial simple. Alternativa descartada: reintentos infinitos, que ocultan fallos de configuración.
-- **`audit_logs` append-only.** Solo se concede `INSERT` y `SELECT` al rol de aplicación; no existe comando de actualización o borrado en el repositorio. Alternativa descartada: borrado lógico con columna `eliminado`, que permite alterar el histórico.
+- **`audit_logs` append-only.** La migración revoca `UPDATE` y `DELETE` a `PUBLIC` y añade un trigger `BEFORE UPDATE OR DELETE` que lanza `AUDITORIA_INMUTABLE`. El trigger cubre también al usuario de aplicación cuando es propietario de la tabla (ADR-003), porque un `GRANT`/`REVOKE` no puede quitarle los derechos inherentes de propiedad. El repositorio no expone actualización ni borrado. Alternativa descartada: borrado lógico con columna `eliminado`, que permite alterar el histórico.
 - **Reporte calculado con `GROUP BY` sobre `reservas`.** Se filtran estados `APROBADA` y `COMPLETADA`; el denominador es `(cierre − apertura) × días naturales del rango` en `America/Bogota` y las horas se suman como unión de intervalos para no duplicar solapes entre una reserva `COMPLETADA` y una `APROBADA`. Alternativa descartada: tabla de contadores que se desincronizaría al cancelar.
 - **Supuesto: feriados y días no hábiles fuera del alcance.** El plan §2.3 menciona parámetros de feriados, pero no existe un capability de configuración en estos changes; el reporte usa días naturales y el supuesto queda registrado aquí conforme a §5.2 del plan. Alternativa descartada: inventar una tabla de feriados sin especificación revisada.
 - **Acceso al reporte mediante la política de `autorizacion`.** No se crea un mecanismo de permisos paralelo. Alternativa descartada: validar el rol dentro del controlador del reporte.
@@ -50,6 +50,6 @@ Los patrones adoptados en este change (ver `docs/adr/ADR-002-patrones-de-diseno.
 ## Migration Plan
 
 1. Crear tablas `notifications` y `audit_logs` con sus índices.
-2. Restringir permisos de `audit_logs` a `INSERT`/`SELECT` para el usuario de aplicación.
+2. Restringir `audit_logs` a inserción y consulta (`REVOKE UPDATE, DELETE ... FROM PUBLIC` más trigger de inmutabilidad).
 3. Registrar el `IHostedService` de notificaciones en el arranque de ASP.NET Core.
 4. Rollback: eliminar el worker, luego las dos tablas; no afecta a reservas ni espacios.

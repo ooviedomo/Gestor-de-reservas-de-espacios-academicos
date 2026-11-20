@@ -16,7 +16,8 @@ public sealed class RechazarReserva(
     IReservaRepository repository,
     GuardiaOperacionesProtegidas guardia,
     IUsuarioActual usuarioActual,
-    IDomainEventDispatcher? eventos = null) : ICommandHandler<RechazarReservaCommand>
+    IDomainEventDispatcher? eventos = null,
+    ITransaccionEventos? transaccion = null) : ICommandHandler<RechazarReservaCommand>
 {
     public async Task<Result> HandleAsync(
         RechazarReservaCommand command,
@@ -44,12 +45,16 @@ public sealed class RechazarReserva(
             var ahora = DateTimeOffset.UtcNow;
             reserva.Rechazar(
                 ActorTransicion.Usuario(usuarioId, usuarioActual.Rol), command.Motivo, ahora);
-            await repository.UpdateAsync(reserva, cancellationToken);
-            await (eventos ?? NullDomainEventDispatcher.Instancia).PublicarAsync(
-                new ReservaRechazada(
-                    reserva.Id, reserva.SpaceId, reserva.UsuarioId, usuarioId, usuarioActual.Rol,
-                    reserva.MotivoRechazo ?? command.Motivo, ahora),
-                cancellationToken);
+            var despachador = eventos ?? NullDomainEventDispatcher.Instancia;
+            await (transaccion ?? TransaccionEventosNula.Instancia).EjecutarAsync(async token =>
+            {
+                await repository.UpdateAsync(reserva, token);
+                await despachador.PublicarAsync(
+                    new ReservaRechazada(
+                        reserva.Id, reserva.SpaceId, reserva.UsuarioId, usuarioId, usuarioActual.Rol,
+                        reserva.MotivoRechazo ?? command.Motivo, ahora),
+                    token);
+            }, cancellationToken);
             return Result.Success();
         }
         catch (DomainException exception)

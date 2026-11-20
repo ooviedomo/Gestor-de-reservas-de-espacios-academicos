@@ -13,6 +13,8 @@ public sealed class ReservaEspaciosDbContext(DbContextOptions<ReservaEspaciosDbC
 {
     public DbSet<Space> Spaces => Set<Space>();
     public DbSet<Reservation> Reservations => Set<Reservation>();
+    public DbSet<Notificacion> Notificaciones => Set<Notificacion>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -103,6 +105,51 @@ public sealed class ReservaEspaciosDbContext(DbContextOptions<ReservaEspaciosDbC
             entity.ToTable(table => table.HasCheckConstraint(
                 "ck_reservations_rango",
                 "\"inicio\" < \"fin\""));
+        });
+
+        modelBuilder.Entity<Notificacion>(entity =>
+        {
+            entity.ToTable("notifications");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).HasColumnName("id");
+            entity.Property(x => x.ReservaId).HasColumnName("reserva_id");
+            entity.Property(x => x.Canal).HasColumnName("canal").IsRequired();
+            entity.Property(x => x.Destinatario).HasColumnName("destinatario").IsRequired();
+            entity.Property(x => x.Asunto).HasColumnName("asunto").IsRequired();
+            entity.Property(x => x.Cuerpo).HasColumnName("cuerpo").IsRequired();
+            entity.Property(x => x.Estado).HasColumnName("estado").IsRequired();
+            entity.Property(x => x.Intentos).HasColumnName("intentos");
+            entity.Property(x => x.UltimoError).HasColumnName("ultimo_error");
+            entity.Property(x => x.EnviadoEn).HasColumnName("enviado_en")
+                .HasColumnType("timestamp with time zone");
+            entity.Property(x => x.ProximoIntentoEn).HasColumnName("proximo_intento_en")
+                .HasColumnType("timestamp with time zone");
+            entity.Property(x => x.CreadoEn).HasColumnName("creado_en")
+                .HasColumnType("timestamp with time zone");
+
+            entity.HasIndex(x => x.ReservaId).HasDatabaseName("ix_notifications_reserva_id");
+            entity.HasIndex(x => x.Estado).HasDatabaseName("ix_notifications_estado");
+            entity.HasIndex(x => x.ProximoIntentoEn).HasDatabaseName("ix_notifications_proximo_intento");
+        });
+
+        modelBuilder.Entity<AuditLog>(entity =>
+        {
+            entity.ToTable("audit_logs");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).HasColumnName("id");
+            entity.Property(x => x.Entidad).HasColumnName("entidad").IsRequired();
+            entity.Property(x => x.EntidadId).HasColumnName("entidad_id");
+            entity.Property(x => x.Accion).HasColumnName("accion").IsRequired();
+            entity.Property(x => x.ActorId).HasColumnName("actor_id");
+            entity.Property(x => x.ActorRol).HasColumnName("actor_rol");
+            entity.Property(x => x.OcurridoEn).HasColumnName("ocurrido_en")
+                .HasColumnType("timestamp with time zone");
+            entity.Property(x => x.Metadata).HasColumnName("metadata");
+
+            entity.HasIndex(x => x.EntidadId).HasDatabaseName("ix_audit_logs_entidad_id");
+            entity.HasIndex(x => x.Entidad).HasDatabaseName("ix_audit_logs_entidad");
+            entity.HasIndex(x => x.ActorId).HasDatabaseName("ix_audit_logs_actor_id");
+            entity.HasIndex(x => x.OcurridoEn).HasDatabaseName("ix_audit_logs_ocurrido_en");
         });
     }
 
