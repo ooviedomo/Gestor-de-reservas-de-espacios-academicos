@@ -33,14 +33,6 @@
     </ul>
 </section>
 
-@if (!Autenticado)
-{
-    <p>
-        <a href="/acceso/login">Acceder</a> o
-        <a href="/acceso/registro">registrarse como solicitante</a>.
-    </p>
-}
-
 @code {
     private bool Autenticado => Usuario.EstaAutenticado;
     private Rol Rol => Usuario.Rol;

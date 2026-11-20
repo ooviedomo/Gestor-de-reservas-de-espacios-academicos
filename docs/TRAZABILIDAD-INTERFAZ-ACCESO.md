@@ -8,7 +8,7 @@ prueba en `tests/`.
 
 | Escenario del spec | Pruebas |
 | --- | --- |
-| Visitante sin sesión | `TC_UI_001_Portada_no_es_el_scaffold_y_el_anonimo_ve_solo_acceso`, `TC_UI_001_Menu_anonimo_muestra_login_registro_y_oculta_operaciones` |
+| Visitante sin sesión | `TC_UI_001_Portada_no_es_el_scaffold_y_el_anonimo_ve_solo_acceso` (sin enlaces de sesión en el cuerpo), `TC_UI_001_Menu_anonimo_muestra_login_registro_y_oculta_operaciones` (acceso y registro en la cabecera) |
 | Solicitante autenticado | `TC_UI_001_Portada_muestra_accesos_segun_el_rol(Rol.Solicitante, …)`, `TC_UI_001_Menu_filtra_enlaces_y_muestra_la_etiqueta_del_rol(Rol.Solicitante, …)` |
 | Coordinador autenticado | `TC_UI_001_Portada_muestra_accesos_segun_el_rol(Rol.Coordinador, …)`, `TC_UI_001_Menu_filtra_enlaces_y_muestra_la_etiqueta_del_rol(Rol.Coordinador, …)` |
 | Administrador autenticado | `TC_UI_001_Portada_muestra_accesos_segun_el_rol(Rol.Administrador, …)`, `TC_UI_001_Menu_filtra_enlaces_y_muestra_la_etiqueta_del_rol(Rol.Administrador, …)` |
@@ -54,7 +54,7 @@ No se añaden patrones nuevos ni dependencias NuGet.
 - `dotnet build ReservaEspacios.sln`: 0 advertencias, 0 errores.
 - `dotnet format ReservaEspacios.sln --verify-no-changes --no-restore`: sin cambios.
 - `dotnet test ReservaEspacios.sln`: **286** pruebas superadas (169 unitarias, 35 bUnit, 82 integración).
-- Cobertura de líneas consolidada (coverlet + ReportGenerator): **94.3%** (3560/3773).
+- Cobertura de líneas consolidada (coverlet + ReportGenerator): **94.3%** (3557/3770).
   Por ensamblado: Application 95.0% (723/761), Domain 92.6% (316/341),
-  Infrastructure 96.0% (1901/1980), Web 89.7% (620/691).
+  Infrastructure 96.0% (1901/1980), Web 89.6% (617/688).
 - `openspec validate add-interfaz-de-acceso-y-navegacion --strict`: válido.

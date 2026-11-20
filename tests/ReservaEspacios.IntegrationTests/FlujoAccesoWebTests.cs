@@ -39,14 +39,14 @@ public sealed class FlujoAccesoWebTests(PostgresFixture fixture) : IClassFixture
         autenticada.Should().Contain("Solicitar reserva");
         autenticada.Should().Contain("Cerrar sesión");
         autenticada.Should().Contain("Solicitante");
-        autenticada.Should().NotContain("Acceder o");
+        autenticada.Should().NotContain("/acceso/login");
 
         var logout = await client.PostAsync("/api/autenticacion/logout", null);
         logout.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var anonima = await client.GetStringAsync("/");
-        anonima.Should().Contain("Acceder");
-        anonima.Should().Contain("registrarse como solicitante");
+        anonima.Should().Contain("/acceso/login");
+        anonima.Should().Contain("/acceso/registro");
         anonima.Should().NotContain("Solicitar reserva");
         anonima.Should().NotContain("Cerrar sesión");
     }

@@ -50,7 +50,7 @@ Los prompts siguientes son **representativos**: parafrasean las instrucciones re
 - `dotnet build ReservaEspacios.sln`: 0 advertencias, 0 errores.
 - `dotnet format ReservaEspacios.sln --verify-no-changes`: sin cambios.
 - `dotnet test ReservaEspacios.sln`: **286** pruebas superadas (169 unitarias, 35 bUnit, 82 integración).
-- Cobertura de líneas consolidada: **94.3%** (3560/3773), por encima del umbral del 80% de la tarea 5.1.
+- Cobertura de líneas consolidada: **94.3%** (3557/3770), por encima del umbral del 80% de la tarea 5.1.
 - `openspec validate add-reservas-y-aprobaciones --strict` y `openspec validate add-interfaz-de-acceso-y-navegacion --strict`: válidos.
 - Migraciones de EF Core revisadas: `btree_gist`, `EXCLUDE ... WHERE estado IN ('PENDIENTE','APROBADA')`, columnas `asistentes`, `motivo_rechazo`, `completado_en`.
 - Dependencias: sin paquetes añadidos a la stack del plan §3.2.

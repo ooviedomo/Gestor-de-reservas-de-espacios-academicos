@@ -28,8 +28,8 @@ public sealed class InterfazAccesoTests
 
         texto.Should().NotContain("Hello, world!");
         texto.Should().Contain("Consultar disponibilidad");
-        texto.Should().Contain("Acceder");
-        texto.Should().Contain("registrarse como solicitante");
+        texto.Should().NotContain("Acceder");
+        texto.Should().NotContain("registrarse como solicitante");
         texto.Should().NotContain("Solicitar reserva");
         texto.Should().NotContain("Panel de aprobación");
         texto.Should().NotContain("Administrar espacios");
@@ -48,7 +48,7 @@ public sealed class InterfazAccesoTests
 
         texto.Should().Contain("Ver historial de reservas");
         texto.Should().Contain(enlaceEsperado);
-        texto.Should().NotContain("Acceder o");
+        texto.Should().NotContain("/acceso/login");
         if (aprobar)
         {
             texto.Should().Contain("Panel de aprobación");
