@@ -18,6 +18,7 @@ var connectionString = builder.Configuration.GetConnectionString("ReservaEspacio
     ?? throw new InvalidOperationException(
         "Defina ConnectionStrings__ReservaEspacios antes de iniciar la aplicación (ADR-003).");
 
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(connectionString);
 

@@ -10,4 +10,5 @@ namespace ReservaEspacios.Web.Security;
 public sealed class UsuarioActualStub : IUsuarioActual
 {
     public Rol Rol => Rol.Solicitante;
+    public Guid? UsuarioId => Guid.Empty;
 }

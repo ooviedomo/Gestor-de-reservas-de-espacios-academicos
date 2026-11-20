@@ -5,6 +5,11 @@
     <ProjectReference Include="..\ReservaEspacios.Application\ReservaEspacios.Application.csproj" />
   </ItemGroup>
 
+  <!-- SignInManager forma parte del shared framework de ASP.NET Core. -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.4" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.4" />

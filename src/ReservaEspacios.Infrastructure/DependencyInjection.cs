@@ -5,7 +5,9 @@ using ReservaEspacios.Application.Disponibilidad;
 using ReservaEspacios.Application.Espacios;
 using ReservaEspacios.Infrastructure.Disponibilidad;
 using ReservaEspacios.Infrastructure.Espacios;
+using ReservaEspacios.Infrastructure.Identity;
 using ReservaEspacios.Infrastructure.Persistence;
+using ReservaEspacios.Application.Usuarios;
 
 namespace ReservaEspacios.Infrastructure;
 
@@ -20,6 +22,7 @@ public static class DependencyInjection
         services.AddScoped<ISpaceRepository, SpaceRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IDisponibilidadRepository, StubDisponibilidadRepository>();
+        services.AddScoped<IUsuarioIdentityService, IdentityUsuarioService>();
 
         // El decorator se registra después que el caso de uso en AddApplication(),
         // por lo que es la implementación efectiva de IConsultarDisponibilidad.

@@ -139,5 +139,6 @@ public sealed class CatalogoTests(PostgresFixture fixture) : IClassFixture<Postg
     private sealed class UsuarioActualStub(Rol rol) : IUsuarioActual
     {
         public Rol Rol { get; } = rol;
+        public Guid? UsuarioId => Guid.NewGuid();
     }
 }
