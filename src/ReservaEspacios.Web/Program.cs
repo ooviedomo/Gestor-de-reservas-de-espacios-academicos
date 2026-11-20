@@ -6,6 +6,7 @@ using ReservaEspacios.Infrastructure;
 using ReservaEspacios.Infrastructure.Identity;
 using ReservaEspacios.Infrastructure.Persistence;
 using ReservaEspacios.Web;
+using ReservaEspacios.Web.BackgroundServices;
 using ReservaEspacios.Web.Components;
 using ReservaEspacios.Web.Security;
 
@@ -41,6 +42,12 @@ builder.Services
     .AddDefaultTokenProviders();
 
 builder.Services.AddScoped<IUsuarioActual, IdentityRoleAdapter>();
+
+// COM-001: cierre diario de reservas APROBADA vencidas. El intervalo se configura con
+// Reservas__CierreAutomatico__IntervaloSegundos (por defecto, 24 h).
+builder.Services.Configure<CierreAutomaticoOptions>(
+    builder.Configuration.GetSection("Reservas:CierreAutomatico"));
+builder.Services.AddHostedService<CerrarReservasVencidasWorker>();
 
 var app = builder.Build();
 

@@ -14,6 +14,10 @@ public sealed class TraductorErroresReservaDecorator(IReservaRepository inner) :
     public Task<Reservation?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
         inner.GetByIdAsync(id, cancellationToken);
 
+    public Task<IReadOnlyList<Reservation>> ObtenerAprobadasVencidasAsync(
+        DateTimeOffset ahora, CancellationToken cancellationToken = default) =>
+        inner.ObtenerAprobadasVencidasAsync(ahora, cancellationToken);
+
     public Task AddAsync(Reservation reserva, CancellationToken cancellationToken = default) =>
         EjecutarAsync(() => inner.AddAsync(reserva, cancellationToken));
 

@@ -135,6 +135,16 @@ public static class ApiEndpoints
                 : Error(resultado.ErrorCode);
         });
 
+        app.MapPost("/api/reservas/{reservaId:guid}/completacion", async (
+            Guid reservaId,
+            CompletarReserva completar) =>
+        {
+            var resultado = await completar.HandleAsync(new CompletarReservaCommand(reservaId));
+            return resultado.IsSuccess
+                ? Results.Ok(new { id = reservaId })
+                : Error(resultado.ErrorCode);
+        });
+
         app.MapGet("/api/auditoria", (GuardiaOperacionesProtegidas guardia) =>
         {
             var verificacion = guardia.VerificarAuditoria();

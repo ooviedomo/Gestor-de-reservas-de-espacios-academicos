@@ -11,6 +11,16 @@ public sealed class ReservaRepository(ReservaEspaciosDbContext context) : IReser
     public Task<Reservation?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
         context.Reservations.FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
 
+    public async Task<IReadOnlyList<Reservation>> ObtenerAprobadasVencidasAsync(
+        DateTimeOffset ahora, CancellationToken cancellationToken = default)
+    {
+        var limite = ahora.ToUniversalTime();
+        return await context.Reservations
+            .Where(r => r.Estado == EstadoReserva.Aprobada && r.Fin <= limite)
+            .OrderBy(r => r.Fin)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task AddAsync(Reservation reserva, CancellationToken cancellationToken = default)
     {
         context.Reservations.Add(reserva);

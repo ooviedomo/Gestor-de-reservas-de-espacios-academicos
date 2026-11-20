@@ -48,12 +48,17 @@ public static class DependencyInjection
         services.AddScoped<CancelarReserva>();
         services.AddScoped<AprobarReserva>();
         services.AddScoped<RechazarReserva>();
+        services.AddScoped<CompletarReserva>();
+        services.AddScoped<CerrarReservasVencidas>();
         // La UI depende de la abstracción del patrón Command (ADR-002), no del handler
         // concreto; así los componentes se prueban con un mock del comando (tarea 3.5).
         services.AddScoped<ICommandHandler<CrearReservaCommand, Guid>, CrearReserva>();
         services.AddScoped<ICommandHandler<CancelarReservaCommand>, CancelarReserva>();
         services.AddScoped<ICommandHandler<AprobarReservaCommand>, AprobarReserva>();
         services.AddScoped<ICommandHandler<RechazarReservaCommand>, RechazarReserva>();
+        services.AddScoped<ICommandHandler<CompletarReservaCommand>, CompletarReserva>();
+        services.AddScoped<ICerrarReservasVencidas>(provider =>
+            provider.GetRequiredService<CerrarReservasVencidas>());
         services.AddScoped<RegistrarSolicitante>();
         services.AddScoped<CrearUsuarioPrivilegiado>();
         services.AddScoped<CambiarRolUsuario>();
