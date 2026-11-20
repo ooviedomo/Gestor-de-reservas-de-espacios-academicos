@@ -139,6 +139,24 @@ public sealed class IdentityUsuarioService(
             usuario is null ? null : await SesionAsync(usuario));
     }
 
+    public async Task<Result<DatosActorDto?>> ObtenerPorIdAsync(
+        Guid usuarioId,
+        CancellationToken cancellationToken = default)
+    {
+        var usuario = await userManager.FindByIdAsync(usuarioId.ToString());
+        if (usuario is null)
+        {
+            return Result<DatosActorDto?>.Success(null);
+        }
+
+        var roles = await userManager.GetRolesAsync(usuario);
+        var rol = roles.Select(RolExtensions.DesdeCodigo).FirstOrDefault(x => x is not null)
+            ?? Rol.Solicitante;
+
+        return Result<DatosActorDto?>.Success(
+            new DatosActorDto(usuario.Id, usuario.Nombre, rol));
+    }
+
     private async Task<UsuarioSesionDto> SesionAsync(ApplicationUser usuario)
     {
         var roles = await userManager.GetRolesAsync(usuario);

@@ -21,6 +21,10 @@ public sealed class InvalidarCacheReservaDecorator(
         DateTimeOffset ahora, CancellationToken cancellationToken = default) =>
         inner.ObtenerAprobadasVencidasAsync(ahora, cancellationToken);
 
+    public Task<IReadOnlyList<Reservation>> ObtenerHistorialAsync(
+        FiltroHistorial filtro, CancellationToken cancellationToken = default) =>
+        inner.ObtenerHistorialAsync(filtro, cancellationToken);
+
     public async Task AddAsync(Reservation reserva, CancellationToken cancellationToken = default)
     {
         await inner.AddAsync(reserva, cancellationToken);

@@ -4,6 +4,7 @@ using ReservaEspacios.Application.Espacios;
 using ReservaEspacios.Application.Reservas;
 using ReservaEspacios.Application.Usuarios;
 using ReservaEspacios.Domain.Common;
+using ReservaEspacios.Domain.Reservas;
 
 namespace ReservaEspacios.Web;
 
@@ -82,13 +83,31 @@ public static class ApiEndpoints
                 : Error(resultado.ErrorCode);
         });
 
-        app.MapGet("/api/reservas/historial", (
-            GuardiaOperacionesProtegidas guardia) =>
+        app.MapGet("/api/reservas/historial", async (
+            string? estado,
+            DateTimeOffset? desde,
+            DateTimeOffset? hasta,
+            Guid? spaceId,
+            ConsultarHistorial consultar,
+            CancellationToken cancellationToken) =>
         {
-            var verificacion = guardia.VerificarHistorial();
-            return !verificacion.IsSuccess
-                ? Error(verificacion.ErrorCode)
-                : NotImplemented("El historial se incorpora en la tarea 4.3.");
+            var estadoParseado = EstadoReservaExtensions.DesdeCodigo(estado);
+            if (estado is not null && estadoParseado is null)
+            {
+                return Results.BadRequest(new { error = "ESTADO_INVALIDO" });
+            }
+
+            var filtro = new FiltroHistorial(
+                Estado: estadoParseado,
+                Desde: desde,
+                Hasta: hasta,
+                SpaceId: spaceId);
+            var resultado = await consultar.HandleAsync(
+                new ConsultarHistorialCommand(filtro), cancellationToken);
+
+            return resultado.IsSuccess
+                ? Results.Ok(resultado.Value)
+                : Error(resultado.ErrorCode);
         });
 
         app.MapPost("/api/reservas", async (

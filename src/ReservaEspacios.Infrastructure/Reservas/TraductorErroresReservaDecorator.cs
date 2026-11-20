@@ -18,6 +18,10 @@ public sealed class TraductorErroresReservaDecorator(IReservaRepository inner) :
         DateTimeOffset ahora, CancellationToken cancellationToken = default) =>
         inner.ObtenerAprobadasVencidasAsync(ahora, cancellationToken);
 
+    public Task<IReadOnlyList<Reservation>> ObtenerHistorialAsync(
+        FiltroHistorial filtro, CancellationToken cancellationToken = default) =>
+        inner.ObtenerHistorialAsync(filtro, cancellationToken);
+
     public Task AddAsync(Reservation reserva, CancellationToken cancellationToken = default) =>
         EjecutarAsync(() => inner.AddAsync(reserva, cancellationToken));
 

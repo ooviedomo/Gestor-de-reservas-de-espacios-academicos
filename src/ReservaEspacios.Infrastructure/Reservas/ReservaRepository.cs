@@ -21,6 +21,41 @@ public sealed class ReservaRepository(ReservaEspaciosDbContext context) : IReser
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<Reservation>> ObtenerHistorialAsync(
+        FiltroHistorial filtro, CancellationToken cancellationToken = default)
+    {
+        var consulta = context.Reservations.AsQueryable();
+
+        if (filtro.UsuarioId is { } usuarioId)
+        {
+            consulta = consulta.Where(r => r.UsuarioId == usuarioId);
+        }
+
+        if (filtro.Estado is { } estado)
+        {
+            consulta = consulta.Where(r => r.Estado == estado);
+        }
+
+        if (filtro.SpaceId is { } spaceId)
+        {
+            consulta = consulta.Where(r => r.SpaceId == spaceId);
+        }
+
+        if (filtro.Desde is { } desde)
+        {
+            consulta = consulta.Where(r => r.Inicio >= desde);
+        }
+
+        if (filtro.Hasta is { } hasta)
+        {
+            consulta = consulta.Where(r => r.Inicio <= hasta);
+        }
+
+        return await consulta
+            .OrderByDescending(r => r.CreadoEn)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task AddAsync(Reservation reserva, CancellationToken cancellationToken = default)
     {
         context.Reservations.Add(reserva);

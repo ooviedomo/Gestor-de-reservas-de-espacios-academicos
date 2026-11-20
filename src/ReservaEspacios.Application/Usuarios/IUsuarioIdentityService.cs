@@ -11,6 +11,9 @@ public sealed record UsuarioSesionDto(
     Rol Rol,
     bool Activo);
 
+/// <summary>RES-004: identidad mínima para mostrar solicitante y actor en el historial.</summary>
+public sealed record DatosActorDto(Guid Id, string Nombre, Rol Rol);
+
 public sealed record CrearUsuarioCommand(
     string Nombre,
     string Email,
@@ -44,5 +47,10 @@ public interface IUsuarioIdentityService
 
     Task<Result<UsuarioSesionDto?>> BuscarPorEmailAsync(
         string email,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>RES-004: nombre y rol de un usuario, para resolver los actores del historial.</summary>
+    Task<Result<DatosActorDto?>> ObtenerPorIdAsync(
+        Guid usuarioId,
         CancellationToken cancellationToken = default);
 }

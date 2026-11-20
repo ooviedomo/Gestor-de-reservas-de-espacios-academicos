@@ -14,6 +14,10 @@ public interface IReservaRepository
     Task<IReadOnlyList<Reservation>> ObtenerAprobadasVencidasAsync(
         DateTimeOffset ahora, CancellationToken cancellationToken = default);
 
+    /// <summary>RES-004: historial con filtros; la visibilidad por rol se resuelve en Application.</summary>
+    Task<IReadOnlyList<Reservation>> ObtenerHistorialAsync(
+        FiltroHistorial filtro, CancellationToken cancellationToken = default);
+
     Task AddAsync(Reservation reserva, CancellationToken cancellationToken = default);
     Task UpdateAsync(Reservation reserva, CancellationToken cancellationToken = default);
 }
