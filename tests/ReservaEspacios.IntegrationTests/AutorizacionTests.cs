@@ -20,8 +20,8 @@ namespace ReservaEspacios.IntegrationTests;
 /// AUTH-001/002/003 ejecutados sobre el host real con WebApplicationFactory.
 /// La autenticación en sí se verifica en TC-USR-003-*; aquí se inyecta el usuario
 /// autenticado para que las pruebas se centren en la matriz de permisos y sus guards.
-/// Las respuestas 501 confirman que el guard otorgó el permiso para operaciones
-/// cuyo caso de uso se implementa en tareas posteriores del change.
+/// Las respuestas 501 confirman que el guard otorgó el permiso para auditoría y
+/// reportes, que se implementan en el siguiente change.
 /// </summary>
 public sealed class AutorizacionTests(PostgresFixture fixture) : IClassFixture<PostgresFixture>
 {
@@ -135,8 +135,10 @@ public sealed class AutorizacionTests(PostgresFixture fixture) : IClassFixture<P
         using var factory = CrearFactory(Rol.Coordinador);
         var client = factory.CreateClient();
 
-        (await client.PostAsJsonAsync($"/api/reservas/{Guid.NewGuid()}/aprobacion", new { }))
-            .StatusCode.Should().Be(HttpStatusCode.NotImplemented);
+        await DevolverError(
+            await client.PostAsJsonAsync($"/api/reservas/{Guid.NewGuid()}/aprobacion", new { }),
+            HttpStatusCode.BadRequest,
+            DomainErrors.ReservaNoEncontrada);
         (await client.GetAsync("/api/auditoria")).StatusCode.Should().Be(HttpStatusCode.NotImplemented);
         (await client.GetAsync("/api/reportes/ocupacion")).StatusCode
             .Should().Be(HttpStatusCode.NotImplemented);
@@ -169,8 +171,10 @@ public sealed class AutorizacionTests(PostgresFixture fixture) : IClassFixture<P
             HttpStatusCode.Forbidden,
             DomainErrors.NoAutorizado);
 
-        (await client.PostAsJsonAsync($"/api/reservas/{Guid.NewGuid()}/aprobacion", new { }))
-            .StatusCode.Should().Be(HttpStatusCode.NotImplemented);
+        await DevolverError(
+            await client.PostAsJsonAsync($"/api/reservas/{Guid.NewGuid()}/aprobacion", new { }),
+            HttpStatusCode.BadRequest,
+            DomainErrors.ReservaNoEncontrada);
 
         var permisos = await client.GetFromJsonAsync<PermisosDto>("/api/autorizacion/permisos");
         permisos!.CrearReserva.Should().BeFalse();

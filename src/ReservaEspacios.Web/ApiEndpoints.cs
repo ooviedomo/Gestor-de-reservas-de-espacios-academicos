@@ -113,14 +113,26 @@ public static class ApiEndpoints
                 : Error(resultado.ErrorCode);
         });
 
-        app.MapPost("/api/reservas/{reservaId:guid}/aprobacion", (
+        app.MapPost("/api/reservas/{reservaId:guid}/aprobacion", async (
             Guid reservaId,
-            GuardiaOperacionesProtegidas guardia) =>
+            AprobarReserva aprobar) =>
         {
-            var verificacion = guardia.VerificarAprobar();
-            return !verificacion.IsSuccess
-                ? Error(verificacion.ErrorCode)
-                : NotImplemented($"AprobarReserva({reservaId}) se incorpora en la tarea 4.1.");
+            var resultado = await aprobar.HandleAsync(new AprobarReservaCommand(reservaId));
+            return resultado.IsSuccess
+                ? Results.Ok(new { id = reservaId })
+                : Error(resultado.ErrorCode);
+        });
+
+        app.MapPost("/api/reservas/{reservaId:guid}/rechazo", async (
+            Guid reservaId,
+            RechazarReservaRequest body,
+            RechazarReserva rechazar) =>
+        {
+            var resultado = await rechazar.HandleAsync(
+                new RechazarReservaCommand(reservaId, body.Motivo));
+            return resultado.IsSuccess
+                ? Results.Ok(new { id = reservaId })
+                : Error(resultado.ErrorCode);
         });
 
         app.MapGet("/api/auditoria", (GuardiaOperacionesProtegidas guardia) =>
@@ -159,4 +171,7 @@ public static class ApiEndpoints
 
 /// <summary>Cuerpo de la cancelación: el identificador viaja en la ruta (tarea 3.4).</summary>
 public sealed record CancelarReservaRequest(string Motivo);
+
+/// <summary>Cuerpo del rechazo: el identificador viaja en la ruta (tarea 4.1).</summary>
+public sealed record RechazarReservaRequest(string Motivo);
 

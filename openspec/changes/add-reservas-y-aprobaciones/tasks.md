@@ -22,7 +22,7 @@
 
 ## 4. Aprobación e historial
 
-- [ ] 4.1 Implementar `AprobarReserva` y `RechazarReserva` registrando actor, fecha y motivo, y verificar `TC-APR-001-*` con pruebas unitarias e integración.
+- [x] 4.1 Implementar `AprobarReserva` y `RechazarReserva` registrando actor, fecha y motivo, y verificar `TC-APR-001-*` con pruebas unitarias e integración.
 - [ ] 4.2 Implementar `CompletarReserva` manual y el proceso periódico de completado automático al vencer `fin`, y verificar `TC-COM-001-*` con pruebas unitarias e integración.
 - [ ] 4.3 Implementar la consulta de historial con filtros y visibilidad por rol, y verificar `TC-RES-004-*` incluido el motivo de rechazo y el actor con nombre y rol.
 - [ ] 4.4 Crear el panel de aprobación y la vista de historial en Blazor y verificar con `WebApplicationFactory` que coordinador y solicitante ven conjuntos distintos de reservas.
