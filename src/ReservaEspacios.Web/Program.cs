@@ -1,7 +1,10 @@
+using Microsoft.AspNetCore.Identity;
 using ReservaEspacios.Application;
 using ReservaEspacios.Application.Common;
 using ReservaEspacios.Application.Disponibilidad;
 using ReservaEspacios.Infrastructure;
+using ReservaEspacios.Infrastructure.Identity;
+using ReservaEspacios.Infrastructure.Persistence;
 using ReservaEspacios.Web.Components;
 using ReservaEspacios.Web.Security;
 
@@ -17,6 +20,24 @@ var connectionString = builder.Configuration.GetConnectionString("ReservaEspacio
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(connectionString);
+
+// USR-001/003: el email es el nombre de usuario y la directiva de contraseña
+// coincide con CONTRASENA_DEBIL (8 caracteres, mayúscula y número).
+builder.Services
+    .AddIdentity<ApplicationUser, ApplicationRole>(options =>
+    {
+        options.User.RequireUniqueEmail = true;
+        options.Password.RequiredLength = 8;
+        options.Password.RequireDigit = true;
+        options.Password.RequireUppercase = true;
+        options.Password.RequireLowercase = false;
+        options.Password.RequireNonAlphanumeric = false;
+        options.Password.RequiredUniqueChars = 1;
+    })
+    .AddEntityFrameworkStores<ReservaEspaciosDbContext>()
+    .AddRoles<ApplicationRole>()
+    .AddDefaultTokenProviders();
+
 builder.Services.AddScoped<IUsuarioActual, UsuarioActualStub>();
 
 var app = builder.Build();
@@ -31,6 +52,8 @@ if (!app.Environment.IsDevelopment())
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseAntiforgery();
 
 app.MapStaticAssets();
