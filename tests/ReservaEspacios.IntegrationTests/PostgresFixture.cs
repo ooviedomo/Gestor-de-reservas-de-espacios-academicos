@@ -24,7 +24,9 @@ public sealed class PostgresFixture : IAsyncLifetime
             ?? throw new InvalidOperationException(
                 "Defina ConnectionStrings__ReservaEspaciosTest antes de ejecutar las pruebas de integración.");
 
-        ConnectionString = $"{_adminConnectionString.TrimEnd(';')};Search Path={SchemaName}";
+        // `public` se incluye para que la restricción USING gist resuelva las clases
+        // de operador de btree_gist instaladas por la migración inicial (ADR-003).
+        ConnectionString = $"{_adminConnectionString.TrimEnd(';')};Search Path={SchemaName},public";
         Options = new DbContextOptionsBuilder<ReservaEspaciosDbContext>()
             .UseNpgsql(ConnectionString)
             .Options;

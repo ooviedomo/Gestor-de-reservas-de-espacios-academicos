@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using ReservaEspacios.Domain.Espacios;
+using ReservaEspacios.Domain.Reservas;
 using ReservaEspacios.Domain.Usuarios;
 using ReservaEspacios.Infrastructure.Identity;
 
@@ -11,6 +12,7 @@ public sealed class ReservaEspaciosDbContext(DbContextOptions<ReservaEspaciosDbC
     : IdentityDbContext<ApplicationUser, ApplicationRole, Guid>(options)
 {
     public DbSet<Space> Spaces => Set<Space>();
+    public DbSet<Reservation> Reservations => Set<Reservation>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -63,7 +65,55 @@ public sealed class ReservaEspaciosDbContext(DbContextOptions<ReservaEspaciosDbC
                 "ck_spaces_horario",
                 "\"hora_apertura\" < \"hora_cierre\""));
         });
+
+        modelBuilder.Entity<Reservation>(entity =>
+        {
+            entity.ToTable("reservations");
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Id).HasColumnName("id");
+            entity.Property(x => x.SpaceId).HasColumnName("space_id");
+            entity.Property(x => x.UsuarioId).HasColumnName("user_id");
+            entity.Property(x => x.Inicio).HasColumnName("inicio").HasColumnType("timestamp with time zone");
+            entity.Property(x => x.Fin).HasColumnName("fin").HasColumnType("timestamp with time zone");
+            entity.Property(x => x.Estado).HasColumnName("estado")
+                .HasConversion(
+                    estado => estado.Codigo(),
+                    codigo => ConvertirEstado(codigo))
+                .IsRequired();
+            entity.Property(x => x.Proposito).HasColumnName("proposito").IsRequired();
+            entity.Property(x => x.Asistentes).HasColumnName("asistentes");
+            entity.Property(x => x.CreadoEn).HasColumnName("creado_en")
+                .HasColumnType("timestamp with time zone");
+            entity.Property(x => x.AprobadoPor).HasColumnName("aprobado_por");
+            entity.Property(x => x.AprobadoEn).HasColumnName("aprobado_en")
+                .HasColumnType("timestamp with time zone");
+            entity.Property(x => x.ActorId).HasColumnName("actor_id");
+            entity.Property(x => x.MotivoRechazo).HasColumnName("motivo_rechazo");
+            entity.Property(x => x.MotivoCancelacion).HasColumnName("motivo_cancelacion");
+            entity.Property(x => x.CanceladoEn).HasColumnName("cancelado_en")
+                .HasColumnType("timestamp with time zone");
+            entity.Property(x => x.CompletadoEn).HasColumnName("completado_en")
+                .HasColumnType("timestamp with time zone");
+
+            entity.HasIndex(x => x.SpaceId).HasDatabaseName("ix_reservations_space_id");
+
+            // El rango semiabierto y la restricción de exclusión se crean con SQL en la
+            // migración: Npgsql no las genera desde el modelo (ADR-002, plan §3.3).
+            entity.ToTable(table => table.HasCheckConstraint(
+                "ck_reservations_rango",
+                "\"inicio\" < \"fin\""));
+        });
     }
+
+    /// <summary>
+    /// El conversor inverso no puede contener `throw` en un árbol de expresiones
+    /// (CS8188), por lo que la validación del código persistido vive en un método
+    /// normal. `DesdeCodigo` ya mapea los códigos del plan, no los nombres del enum.
+    /// </summary>
+    private static EstadoReserva ConvertirEstado(string? codigo) =>
+        EstadoReservaExtensions.DesdeCodigo(codigo)
+        ?? throw new InvalidOperationException($"Estado desconocido: {codigo}");
 
     /// <summary>
     /// Semilla canónica: exactamente tres roles (tarea 1.1). Los IDs son fijos para

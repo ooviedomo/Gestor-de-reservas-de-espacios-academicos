@@ -167,6 +167,86 @@ namespace ReservaEspacios.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("ReservaEspacios.Domain.Reservas.Reservation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("ActorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("actor_id");
+
+                    b.Property<DateTimeOffset?>("AprobadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("aprobado_en");
+
+                    b.Property<Guid?>("AprobadoPor")
+                        .HasColumnType("uuid")
+                        .HasColumnName("aprobado_por");
+
+                    b.Property<int>("Asistentes")
+                        .HasColumnType("integer")
+                        .HasColumnName("asistentes");
+
+                    b.Property<DateTimeOffset?>("CanceladoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("cancelado_en");
+
+                    b.Property<DateTimeOffset?>("CompletadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("completado_en");
+
+                    b.Property<DateTimeOffset>("CreadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("creado_en");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("estado");
+
+                    b.Property<DateTimeOffset>("Fin")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("fin");
+
+                    b.Property<DateTimeOffset>("Inicio")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("inicio");
+
+                    b.Property<string>("MotivoCancelacion")
+                        .HasColumnType("text")
+                        .HasColumnName("motivo_cancelacion");
+
+                    b.Property<string>("MotivoRechazo")
+                        .HasColumnType("text")
+                        .HasColumnName("motivo_rechazo");
+
+                    b.Property<string>("Proposito")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("proposito");
+
+                    b.Property<Guid>("SpaceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("space_id");
+
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SpaceId")
+                        .HasDatabaseName("ix_reservations_space_id");
+
+                    b.ToTable("reservations", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_reservations_rango", "\"inicio\" < \"fin\"");
+                        });
+                });
+
             modelBuilder.Entity("ReservaEspacios.Infrastructure.Identity.ApplicationRole", b =>
                 {
                     b.Property<Guid>("Id")
