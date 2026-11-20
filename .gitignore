@@ -6,6 +6,7 @@ obj/
 *.suo
 TestResults/
 coverage/
+coverage-report/
 
 # Node / OpenSpec tooling
 node_modules/
