@@ -8,4 +8,6 @@ public static class DomainErrors
     public const string HorarioInvalido = "HORARIO_INVALIDO";
     public const string NoAutorizado = "NO_AUTORIZADO";
     public const string TransicionInvalida = "TRANSICION_INVALIDA";
+    /// <summary>Error operativo (no escenario de spec): el id no existe en el catálogo.</summary>
+    public const string EspacioNoEncontrado = "ESPACIO_NO_ENCONTRADO";
 }
