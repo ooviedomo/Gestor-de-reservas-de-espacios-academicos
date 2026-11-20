@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using ReservaEspacios.Application.Disponibilidad;
 using ReservaEspacios.Application.Espacios;
+using ReservaEspacios.Application.Facade;
 
 namespace ReservaEspacios.Application;
 
@@ -14,6 +15,7 @@ public static class DependencyInjection
         services.AddScoped<IReactivarSpace, ReactivarSpace>();
         services.AddScoped<IConsultarCatalogo, ConsultarCatalogo>();
         services.AddScoped<IConsultarDisponibilidad, ConsultarDisponibilidad>();
+        services.AddScoped<IReservaEspaciosFacade, ReservaEspaciosFacade>();
         return services;
     }
 }

@@ -2,8 +2,8 @@
 @rendermode InteractiveServer
 @using ReservaEspacios.Application.Disponibilidad
 @using ReservaEspacios.Application.Espacios
-@inject IConsultarDisponibilidad Consultar
-@inject IConsultarCatalogo Catalogo
+@using ReservaEspacios.Application.Facade
+@inject IReservaEspaciosFacade Facade
 
 <h1>Consulta de disponibilidad</h1>
 
@@ -54,7 +54,7 @@
     protected override async Task OnInitializedAsync()
     {
         var filtro = new FiltroCatalogoBuilder().Build();
-        var catalogo = await Catalogo.HandleAsync(filtro);
+        var catalogo = await Facade.ConsultarCatalogo(filtro);
         espacios = catalogo.IsSuccess
             ? catalogo.Value ?? Array.Empty<SpaceCatalogoDto>()
             : Array.Empty<SpaceCatalogoDto>();
@@ -77,7 +77,7 @@
         var inicioLocal = DateTime.SpecifyKind(fecha.ToDateTime(inicio), DateTimeKind.Unspecified);
         var finLocal = DateTime.SpecifyKind(fecha.ToDateTime(fin), DateTimeKind.Unspecified);
 
-        var respuesta = await Consultar.HandleAsync(new ConsultarDisponibilidadCommand(
+        var respuesta = await Facade.ConsultarDisponibilidad(new ConsultarDisponibilidadCommand(
             formulario.SpaceId,
             new DateTimeOffset(inicioLocal, zona.GetUtcOffset(inicioLocal)),
             new DateTimeOffset(finLocal, zona.GetUtcOffset(finLocal))));

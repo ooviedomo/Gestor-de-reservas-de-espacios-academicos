@@ -21,6 +21,14 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IDisponibilidadRepository, StubDisponibilidadRepository>();
 
+        // El decorator se registra después que el caso de uso en AddApplication(),
+        // por lo que es la implementación efectiva de IConsultarDisponibilidad.
+        services.AddScoped<ConsultarDisponibilidad>();
+        services.AddScoped<IDisponibilidadCache, DisponibilidadCache>();
+        services.AddScoped<IConsultarDisponibilidad>(provider => new DisponibilidadCacheDecorator(
+            provider.GetRequiredService<ConsultarDisponibilidad>(),
+            provider.GetRequiredService<IDisponibilidadCache>()));
+
         return services;
     }
 }

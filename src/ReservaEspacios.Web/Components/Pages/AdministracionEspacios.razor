@@ -1,10 +1,11 @@
 @page "/administracion/espacios"
 @rendermode InteractiveServer
 @using ReservaEspacios.Application.Espacios
+@using ReservaEspacios.Application.Facade
 @using ReservaEspacios.Domain.Espacios
 @inject IRegistrarSpace RegistrarSpace
 @inject IDesactivarSpace DesactivarSpace
-@inject IConsultarCatalogo ConsultarCatalogo
+@inject IReservaEspaciosFacade Facade
 
 <h1>Administración de espacios</h1>
 
@@ -101,7 +102,7 @@
     private async Task CargarAsync()
     {
         var filtro = new FiltroCatalogoBuilder().Build();
-        var resultado = await ConsultarCatalogo.HandleAsync(filtro);
+        var resultado = await Facade.ConsultarCatalogo(filtro);
         espacios = resultado.IsSuccess
             ? resultado.Value ?? Array.Empty<SpaceCatalogoDto>()
             : Array.Empty<SpaceCatalogoDto>();

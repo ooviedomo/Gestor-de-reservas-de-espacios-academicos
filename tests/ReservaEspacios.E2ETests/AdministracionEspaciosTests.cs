@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using ReservaEspacios.Application.Common;
 using ReservaEspacios.Application.Espacios;
+using ReservaEspacios.Application.Facade;
 using ReservaEspacios.Domain.Espacios;
 using ReservaEspacios.Web.Components.Pages;
 
@@ -54,7 +55,7 @@ public sealed class AdministracionEspaciosTests
         using var ctx = new BunitContext();
         var (_, desactivar, catalogo) = RegistrarServicios(ctx);
         var id = Guid.NewGuid();
-        catalogo.Setup(x => x.HandleAsync(It.IsAny<FiltroCatalogo>(), It.IsAny<CancellationToken>()))
+        catalogo.Setup(x => x.ConsultarCatalogo(It.IsAny<FiltroCatalogo>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result<IReadOnlyList<SpaceCatalogoDto>>.Success(
             [
                 new SpaceCatalogoDto(
@@ -83,15 +84,15 @@ public sealed class AdministracionEspaciosTests
     private static (
         Mock<IRegistrarSpace>,
         Mock<IDesactivarSpace>,
-        Mock<IConsultarCatalogo>) RegistrarServicios(BunitContext ctx)
+        Mock<IReservaEspaciosFacade>) RegistrarServicios(BunitContext ctx)
     {
         var registrar = new Mock<IRegistrarSpace>();
         var desactivar = new Mock<IDesactivarSpace>();
-        var catalogo = new Mock<IConsultarCatalogo>();
+        var catalogo = new Mock<IReservaEspaciosFacade>();
 
         registrar.Setup(x => x.HandleAsync(It.IsAny<RegistrarSpaceCommand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result<Guid>.Success(Guid.NewGuid()));
-        catalogo.Setup(x => x.HandleAsync(It.IsAny<FiltroCatalogo>(), It.IsAny<CancellationToken>()))
+        catalogo.Setup(x => x.ConsultarCatalogo(It.IsAny<FiltroCatalogo>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result<IReadOnlyList<SpaceCatalogoDto>>.Success(
                 Array.Empty<SpaceCatalogoDto>()));
 
