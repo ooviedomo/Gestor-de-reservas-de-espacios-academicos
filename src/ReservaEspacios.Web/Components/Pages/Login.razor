@@ -1,57 +1,51 @@
 @page "/acceso/login"
-@rendermode InteractiveServer
-@using ReservaEspacios.Application.Common
-@using ReservaEspacios.Application.Usuarios
-@inject ICommandHandler<AutenticarUsuarioCommand, UsuarioSesionDto> Autenticar
+@using Microsoft.AspNetCore.WebUtilities
+@using ReservaEspacios.Domain.Common
 @inject NavigationManager Navegador
 
 <PageTitle>Acceder</PageTitle>
 
 <h1>Acceder</h1>
 
-<EditForm Model="formulario" OnValidSubmit="AccederAsync">
-    <div>
-        <label for="email">Email</label>
-        <InputText id="email" @bind-Value="formulario.Email" />
-    </div>
-    <div>
-        <label for="contrasena">Contraseña</label>
-        <InputText id="contrasena" type="password" @bind-Value="formulario.Contrasena" />
-    </div>
-    <button type="submit" id="acceder">Acceder</button>
-</EditForm>
-
 @if (mensajeError is not null)
 {
     <p data-testid="error">@mensajeError</p>
 }
+
+<form method="post" action="/acceso/autenticar">
+    <div>
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" autocomplete="username" />
+    </div>
+    <div>
+        <label for="contrasena">Contraseña</label>
+        <input id="contrasena" name="contrasena" type="password" autocomplete="current-password" />
+    </div>
+    <button type="submit" id="acceder">Acceder</button>
+</form>
 
 <p>
     ¿No tienes cuenta? <a href="/acceso/registro">Regístrate como solicitante</a>.
 </p>
 
 @code {
-    private sealed class Formulario
-    {
-        public string Email { get; set; } = string.Empty;
-        public string Contrasena { get; set; } = string.Empty;
-    }
+    private static readonly string[] ErroresPermitidos =
+    [
+        DomainErrors.CredencialesInvalidas,
+        DomainErrors.CuentaDesactivada
+    ];
 
-    private readonly Formulario formulario = new();
     private string? mensajeError;
 
-    private async Task AccederAsync()
+    protected override void OnInitialized()
     {
-        mensajeError = null;
-        var resultado = await Autenticar.HandleAsync(
-            new AutenticarUsuarioCommand(formulario.Email, formulario.Contrasena));
+        var uri = Navegador.ToAbsoluteUri(Navegador.Uri);
+        var parametros = QueryHelpers.ParseQuery(uri.Query);
 
-        if (resultado.IsSuccess)
+        if (parametros.TryGetValue("error", out var error) &&
+            ErroresPermitidos.Contains(error.ToString()))
         {
-            Navegador.NavigateTo("/", forceLoad: true);
-            return;
+            mensajeError = error.ToString();
         }
-
-        mensajeError = resultado.ErrorCode;
     }
 }

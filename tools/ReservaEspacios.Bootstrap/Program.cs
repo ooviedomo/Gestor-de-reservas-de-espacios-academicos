@@ -42,11 +42,13 @@ servicios
         options.Password.RequiredUniqueChars = 1;
     })
     .AddEntityFrameworkStores<ReservaEspaciosDbContext>()
-    .AddRoles<ApplicationRole>();
+    .AddRoles<ApplicationRole>()
+    .AddDefaultTokenProviders();
 
 await using var proveedor = servicios.BuildServiceProvider(true);
 using var ambito = proveedor.CreateScope();
 var identity = ambito.ServiceProvider.GetRequiredService<IUsuarioIdentityService>();
+var userManager = ambito.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 var registrar = ambito.ServiceProvider
     .GetRequiredService<ICommandHandler<RegistrarSolicitanteCommand, Guid>>();
 
@@ -68,7 +70,27 @@ foreach (var cuenta in cuentas)
     }
     else if (resultado.ErrorCode == DomainErrors.EmailDuplicado)
     {
-        Console.WriteLine($"Ya existe la cuenta {email}; se mantiene.");
+        var usuario = await userManager.FindByEmailAsync(email);
+        if (usuario is null)
+        {
+            Console.Error.WriteLine($"No se encontró la cuenta {email} para rotar la contraseña.");
+            fallos++;
+            continue;
+        }
+
+        var token = await userManager.GeneratePasswordResetTokenAsync(usuario);
+        var renovacion = await userManager.ResetPasswordAsync(usuario, token, contrasena);
+        if (renovacion.Succeeded)
+        {
+            Console.WriteLine($"Contraseña renovada para {email}.");
+        }
+        else
+        {
+            Console.Error.WriteLine(
+                $"No se pudo renovar la contraseña de {email}: " +
+                string.Join(", ", renovacion.Errors.Select(error => error.Code)));
+            fallos++;
+        }
     }
     else
     {

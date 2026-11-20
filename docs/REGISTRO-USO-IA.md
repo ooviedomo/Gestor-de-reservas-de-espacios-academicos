@@ -1,7 +1,7 @@
 # Registro de uso de IA
 
 - **Proyecto:** `ReservaEspacios`
-- **Alcance:** fases 2 y 3 (revisión de especificaciones, implementación asistida y cierre del change `add-reservas-y-aprobaciones`), change `add-interfaz-de-acceso-y-navegacion` y change `add-notificaciones-auditoria-y-reportes`
+- **Alcance:** fases 2 y 3 (revisión de especificaciones, implementación asistida y cierre del change `add-reservas-y-aprobaciones`), changes `add-interfaz-de-acceso-y-navegacion`, `add-notificaciones-auditoria-y-reportes` y `fix-login-cookie-interactive-server`
 - **Base:** `PLAN_INGENIERIA.md` §6.3–6.5. Este documento **no modifica** el plan; las decisiones nuevas están en `docs/adr/` y en el `design.md` del change.
 - **Estado:** aprobación del estudiante **PENDIENTE** (ver §4).
 
@@ -33,6 +33,8 @@ Los prompts siguientes son **representativos**: parafrasean las instrucciones re
 | P-20 | Notificaciones / worker | «Separa el envío SMTP de la transacción: outbox en el caso de uso y `IHostedService` con reintentos y proveedor falso en pruebas» | `NotificacionOutboxHandler`, `ProcesadorNotificaciones`, `NotificacionesWorker`, `BackoffExponencial`, `SmtpEmailSender` | `TC_NOT_002_*` y `TC_NOT_003_*` unitarias e integración; reserva aprobada intacta con SMTP caído |
 | P-21 | Auditoría y reportes | «Registra quién, cuándo y sobre qué entidad; configura la consulta filtrable y calcula ocupación por espacio con días naturales y unión de intervalos» | `AuditoriaHandler`, `AuditoriaRepository`, `CalculoOcupacion`, `RepositorioOcupacion`, endpoints `/api/auditoria` y `/api/reportes/ocupacion` | `TC_AUD_001_*`, `TC_AUD_002_*`, `TC_REP_001_*`, `TC_REP_003_*` |
 | P-22 | UI / cierre | «Añade las vistas de auditoría y reporte, verifica el menú por roles y genera la matriz de trazabilidad del change» | `Auditoria.razor`, `ReporteOcupacion.razor`, `AuditoriaYReportesUITests.cs`, `docs/TRAZABILIDAD-NOTIFICACIONES-AUDITORIA-REPORTES.md` | 48 pruebas bUnit; 54 nombres de prueba verificados; cobertura 95.1% |
+| P-23 | Login / diagnóstico | «Investiga el InvalidOperationException "Headers are read-only" al acceder desde la UI y propón un change sin reabrir los archivados» | `openspec/changes/fix-login-cookie-interactive-server/` con `UI-002` modificada y `design.md` | `openspec validate fix-login-cookie-interactive-server --strict`: válido; causa localizada en el evento `InteractiveServer` |
+| P-24 | Login / implementación | «Sustituye el EditForm por un formulario HTTP normal, reutiliza USR-003 y añade regresión con Set-Cookie y errores por query» | `Login.razor`, `POST /acceso/autenticar` en `ApiEndpoints.cs`, pruebas bUnit y HTTP en `FlujoAccesoWebTests.cs` | 15 pruebas bUnit y 4 pruebas HTTP del flujo de acceso superadas |
 
 ## 2. Salidas rechazadas o corregidas durante la revisión
 
@@ -45,7 +47,9 @@ Los prompts siguientes son **representativos**: parafrasean las instrucciones re
 | `FiltroHistorialBuilder` nombrado en `design.md` pero no implementado | Decisión de diseño incumplida | Implementado y ejercitado por `TC_RES_004_Builder_*` |
 | Expresiones Moq con operador `is not null` en árboles de expresión | Error de compilación `CS8122` en las pruebas bUnit | Sustituidas por `!= null` |
 | Captura del evento de dominio configurada después de invocar al handler | La prueba no capturaba nada | Callback registrado en el constructor de la prueba |
-| Suposición de que `/api/autenticacion/login` no emitía cookie | `PasswordSignInAsync` ya emite la cookie; el vacío real era la falta de UI | Corregido en el `design.md`; la UI reutiliza el comando y solo añade logout |
+| Suposición de que `/api/autenticacion/login` no emitía cookie | `PasswordSignInAsync` ya emite la cookie en una petición HTTP; el fallo real era invocarlo desde un evento `InteractiveServer` | Corregido en el `design.md` del change de login: la UI envía un formulario normal y reutiliza el comando |
+| Iniciar sesión desde `OnValidSubmit` de `EditForm` | La respuesta ya estaba iniciada y Kestrel rechazaba `Set-Cookie` (`Headers are read-only`) | Formulario estático que hace POST a `/acceso/autenticar`; la cookie se emite antes de la redirección |
+| Registrar el POST en `/acceso/login`, la misma ruta del `@page` Razor | `AmbiguousMatchException`: la página Razor acepta todos los verbos | Endpoint movido a `/acceso/autenticar`; la página sigue sirviéndose en `/acceso/login` |
 | `CrearUsuarioPrivilegiadoCommand` para el primer administrador del bootstrap | El guard exige un administrador previo, que aún no existe | El primer administrador y el coordinador se crean vía `IUsuarioIdentityService`; el solicitante usa el comando |
 | `record UsuarioDePrueba(Rol? Rol)` en bUnit | El parámetro primary-constructor chocaba con la propiedad `Rol` | Renombrado a `RolSesion` |
 | Fusión de cobertura con archivos separados por espacio | ReportGenerator solo procesó un archivo y dio 82.6% | Lista separada por `;`; cobertura real 94.3% |
@@ -61,9 +65,9 @@ Los prompts siguientes son **representativos**: parafrasean las instrucciones re
 - **Revisión humana del diff** antes de cada commit (`5455661`, `2cf104b`, `35346fb`, `725c2ce`, `9be23f4`, `0a6f902`, `a45b2b3`, los del change de interfaz y los del change actual).
 - `dotnet build`: 0 advertencias, 0 errores.
 - `dotnet format --verify-no-changes --no-restore`: sin cambios.
-- `dotnet test`: **353** pruebas superadas (211 unitarias, 48 bUnit, 94 integración).
-- Cobertura de líneas consolidada (coverlet + ReportGenerator): **95.1%** (5127/5390), por encima del umbral del 80% de la tarea 5.1.
-- `openspec validate add-reservas-y-aprobaciones --strict`, `openspec validate add-interfaz-de-acceso-y-navegacion --strict` y `openspec validate add-notificaciones-auditoria-y-reportes --strict`: válidos.
+- `dotnet test`: **357** pruebas superadas (211 unitarias, 49 bUnit, 97 integración).
+- Cobertura de líneas consolidada (coverlet + ReportGenerator): **95.1%** (5143/5406); ramas 78.7% (706/896), por encima del umbral del 80% de la tarea 5.1.
+- `openspec validate add-reservas-y-aprobaciones --strict`, `openspec validate add-interfaz-de-acceso-y-navegacion --strict`, `openspec validate add-notificaciones-auditoria-y-reportes --strict` y `openspec validate fix-login-cookie-interactive-server --strict`: válidos.
 - Migraciones de EF Core revisadas: `btree_gist`, `EXCLUDE ... WHERE estado IN ('PENDIENTE','APROBADA')`, columnas `asistentes`, `motivo_rechazo`, `completado_en`, `ultimo_error`, índices de auditoría y trigger `audit_logs_inmutable`.
 - Dependencias: sin paquetes añadidos a la stack del plan §3.2.
 - Trazabilidad requisito → prueba: `docs/TRAZABILIDAD-ESPACIOS-DISPONIBILIDAD.md`, `docs/TRAZABILIDAD-RESERVAS-APROBACIONES.md`, `docs/TRAZABILIDAD-INTERFAZ-ACCESO.md` y `docs/TRAZABILIDAD-NOTIFICACIONES-AUDITORIA-REPORTES.md`.
@@ -84,6 +88,9 @@ De acuerdo con `PLAN_INGENIERIA.md` §6.5, la aprobación de especificaciones, r
 - [ ] He revisado el diff del change `add-notificaciones-auditoria-y-reportes`.
 - [ ] Acepto el outbox, el trigger de auditoría, el reporte de ocupación y las nuevas vistas.
 - [ ] Autorizo archivar `add-notificaciones-auditoria-y-reportes`.
+- [ ] He revisado el diff del change `fix-login-cookie-interactive-server`.
+- [ ] Acepto que la cookie se emita en una petición HTTP de formulario y que los errores viajen por query.
+- [ ] Autorizo archivar `fix-login-cookie-interactive-server`.
 
 **Nombre del estudiante:** ______________________________________
 

@@ -99,45 +99,44 @@ public sealed class InterfazAccesoTests
         texto.Should().Contain("Cerrar sesión");
     }
 
+    [Fact]
+    public void TC_UI_002_Login_es_un_formulario_http_normal()
+    {
+        using var ctx = new BunitContext();
+
+        var cut = ctx.Render<Login>();
+        var formulario = cut.Find("form");
+
+        formulario.GetAttribute("method").Should().Be("post");
+        formulario.GetAttribute("action").Should().Be("/acceso/autenticar");
+        cut.Find("#email").GetAttribute("name").Should().Be("email");
+        cut.Find("#contrasena").GetAttribute("name").Should().Be("contrasena");
+    }
+
     [Theory]
     [InlineData("CREDENCIALES_INVALIDAS")]
     [InlineData("CUENTA_DESACTIVADA")]
-    public void TC_UI_002_Login_muestra_el_codigo_devuelto_por_el_comando(string codigo)
+    public void TC_UI_002_Login_muestra_el_codigo_de_la_query(string codigo)
     {
         using var ctx = new BunitContext();
-        var autenticar = new Mock<ICommandHandler<AutenticarUsuarioCommand, UsuarioSesionDto>>();
-        autenticar.Setup(x => x.HandleAsync(
-                It.IsAny<AutenticarUsuarioCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<UsuarioSesionDto>.Failure(codigo));
-        ctx.Services.AddSingleton(autenticar.Object);
+        ctx.Services.GetRequiredService<NavigationManager>()
+            .NavigateTo($"/acceso/login?error={codigo}");
 
         var cut = ctx.Render<Login>();
-        cut.Find("#email").Change("ana@example.com");
-        cut.Find("#contrasena").Change("Clave1234");
-        cut.Find("form").Submit();
 
-        cut.WaitForAssertion(() => cut.Find("[data-testid='error']")
-            .TextContent.Trim().Should().Be(codigo));
+        cut.Find("[data-testid='error']").TextContent.Trim().Should().Be(codigo);
     }
 
     [Fact]
-    public void TC_UI_002_Login_valido_redirige_a_la_portada()
+    public void TC_UI_002_Login_ignora_codigos_no_permitidos_en_la_query()
     {
         using var ctx = new BunitContext();
-        var autenticar = new Mock<ICommandHandler<AutenticarUsuarioCommand, UsuarioSesionDto>>();
-        autenticar.Setup(x => x.HandleAsync(
-                It.IsAny<AutenticarUsuarioCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<UsuarioSesionDto>.Success(
-                new UsuarioSesionDto(Guid.NewGuid(), "Ana", "ana@example.com", Rol.Solicitante, true)));
-        ctx.Services.AddSingleton(autenticar.Object);
+        ctx.Services.GetRequiredService<NavigationManager>()
+            .NavigateTo("/acceso/login?error=EMAIL_DUPLICADO");
 
         var cut = ctx.Render<Login>();
-        cut.Find("#email").Change("ana@example.com");
-        cut.Find("#contrasena").Change("Clave1234");
-        cut.Find("form").Submit();
 
-        cut.WaitForAssertion(() => ctx.Services.GetRequiredService<NavigationManager>()
-            .Uri.Should().EndWith("/"));
+        cut.FindAll("[data-testid='error']").Should().BeEmpty();
     }
 
     [Theory]

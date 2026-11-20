@@ -40,6 +40,25 @@ public static class ApiEndpoints
                 : Error(resultado.ErrorCode);
         });
 
+        // UI-002: la UI envía un formulario normal. La cookie de Identity se escribe en
+        // esta petición HTTP, antes de la redirección; el endpoint JSON anterior se
+        // conserva para clientes que no son el navegador.
+        app.MapPost("/acceso/autenticar", async (HttpContext contexto, AutenticarUsuario autenticar) =>
+        {
+            var formulario = await contexto.Request.ReadFormAsync();
+            var resultado = await autenticar.HandleAsync(new AutenticarUsuarioCommand(
+                formulario["email"].ToString(),
+                formulario["contrasena"].ToString()));
+
+            if (resultado.IsSuccess)
+            {
+                return Results.Redirect("/");
+            }
+
+            var codigo = resultado.ErrorCode ?? DomainErrors.CredencialesInvalidas;
+            return Results.Redirect($"/acceso/login?error={Uri.EscapeDataString(codigo)}");
+        });
+
         app.MapPost("/api/autenticacion/logout", async (ISesionWeb sesion) =>
         {
             await sesion.CerrarSesionAsync();
