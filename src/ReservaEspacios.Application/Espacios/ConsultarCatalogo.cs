@@ -13,7 +13,7 @@ public sealed record SpaceCatalogoDto(
     bool Activo);
 
 /// <summary>ESP-003: catálogo filtrable con guard de rol sobre el filtro de estado.</summary>
-public sealed class ConsultarCatalogo(ISpaceRepository repository, IUsuarioActual usuarioActual)
+public sealed class ConsultarCatalogo(ISpaceRepository repository, IUsuarioActual usuarioActual) : IConsultarCatalogo
 {
     public async Task<Result<IReadOnlyList<SpaceCatalogoDto>>> HandleAsync(
         FiltroCatalogo filtro,

@@ -1,0 +1,167 @@
+@page "/administracion/espacios"
+@rendermode InteractiveServer
+@using ReservaEspacios.Application.Espacios
+@using ReservaEspacios.Domain.Espacios
+@inject IRegistrarSpace RegistrarSpace
+@inject IDesactivarSpace DesactivarSpace
+@inject IConsultarCatalogo ConsultarCatalogo
+
+<h1>Administración de espacios</h1>
+
+<EditForm Model="formulario" OnValidSubmit="RegistrarAsync">
+    <div>
+        <label for="nombre">Nombre</label>
+        <InputText id="nombre" @bind-Value="formulario.Nombre" />
+    </div>
+    <div>
+        <label for="tipo">Tipo</label>
+        <InputSelect id="tipo" @bind-Value="formulario.Tipo">
+            <option value="@EspacioTipo.Laboratorio">Laboratorio</option>
+            <option value="@EspacioTipo.Auditorio">Auditorio</option>
+            <option value="@EspacioTipo.SalaComputo">Sala de cómputo</option>
+        </InputSelect>
+    </div>
+    <div>
+        <label for="capacidad">Capacidad</label>
+        <InputNumber id="capacidad" @bind-Value="formulario.Capacidad" />
+    </div>
+    <div>
+        <label for="ubicacion">Ubicación</label>
+        <InputText id="ubicacion" @bind-Value="formulario.Ubicacion" />
+    </div>
+    <div>
+        <label for="apertura">Apertura</label>
+        <InputText id="apertura" @bind-Value="formulario.Apertura" />
+    </div>
+    <div>
+        <label for="cierre">Cierre</label>
+        <InputText id="cierre" @bind-Value="formulario.Cierre" />
+    </div>
+    <button type="submit" id="registrar">Registrar espacio</button>
+</EditForm>
+
+@if (mensajeError is not null)
+{
+    <p data-testid="error">@mensajeError</p>
+}
+
+@if (mensajeExito is not null)
+{
+    <p data-testid="exito">@mensajeExito</p>
+}
+
+<h2>Espacios activos</h2>
+<ul>
+    @foreach (var espacio in espacios)
+    {
+        <li data-testid="@($"espacio-{espacio.Id}")">
+            @espacio.Nombre — @espacio.Tipo — @espacio.Capacidad — @espacio.Ubicacion
+            <button type="button" data-testid="@($"desactivar-{espacio.Id}")"
+                    @onclick="() => SolicitarDesactivacion(espacio)">
+                Desactivar
+            </button>
+        </li>
+    }
+</ul>
+
+@if (pendiente is not null)
+{
+    <div data-testid="aviso-conservacion">
+        <p>
+            El espacio @pendiente.Nombre tiene reservas futuras. Las reservas existentes se conservan.
+        </p>
+        <button type="button" data-testid="confirmar-desactivacion" @onclick="ConfirmarDesactivacionAsync">
+            Confirmar desactivación
+        </button>
+        <button type="button" data-testid="cancelar-desactivacion" @onclick="() => pendiente = null">
+            Cancelar
+        </button>
+    </div>
+}
+
+@code {
+    private sealed class Formulario
+    {
+        public string Nombre { get; set; } = string.Empty;
+        public EspacioTipo Tipo { get; set; } = EspacioTipo.Laboratorio;
+        public int Capacidad { get; set; }
+        public string Ubicacion { get; set; } = string.Empty;
+        public string Apertura { get; set; } = "08:00";
+        public string Cierre { get; set; } = "18:00";
+    }
+
+    private readonly Formulario formulario = new();
+    private IReadOnlyList<SpaceCatalogoDto> espacios = Array.Empty<SpaceCatalogoDto>();
+    private SpaceCatalogoDto? pendiente;
+    private string? mensajeError;
+    private string? mensajeExito;
+
+    protected override async Task OnInitializedAsync() => await CargarAsync();
+
+    private async Task CargarAsync()
+    {
+        var filtro = new FiltroCatalogoBuilder().Build();
+        var resultado = await ConsultarCatalogo.HandleAsync(filtro);
+        espacios = resultado.IsSuccess
+            ? resultado.Value ?? Array.Empty<SpaceCatalogoDto>()
+            : Array.Empty<SpaceCatalogoDto>();
+    }
+
+    private async Task RegistrarAsync()
+    {
+        mensajeError = null;
+        mensajeExito = null;
+
+        if (!TimeOnly.TryParse(formulario.Apertura, out var apertura) ||
+            !TimeOnly.TryParse(formulario.Cierre, out var cierre))
+        {
+            mensajeError = "HORARIO_INVALIDO";
+            return;
+        }
+
+        var resultado = await RegistrarSpace.HandleAsync(new RegistrarSpaceCommand(
+            formulario.Nombre,
+            formulario.Tipo,
+            formulario.Capacidad,
+            formulario.Ubicacion,
+            apertura,
+            cierre));
+
+        if (resultado.IsSuccess)
+        {
+            mensajeExito = "Espacio registrado correctamente.";
+            await CargarAsync();
+        }
+        else
+        {
+            mensajeError = resultado.ErrorCode;
+        }
+    }
+
+    private void SolicitarDesactivacion(SpaceCatalogoDto espacio)
+    {
+        pendiente = espacio;
+        mensajeError = null;
+        mensajeExito = null;
+    }
+
+    private async Task ConfirmarDesactivacionAsync()
+    {
+        if (pendiente is null)
+        {
+            return;
+        }
+
+        var resultado = await DesactivarSpace.HandleAsync(new DesactivarSpaceCommand(pendiente.Id));
+        if (resultado.IsSuccess)
+        {
+            mensajeExito = "Espacio desactivado; las reservas existentes se conservan.";
+            pendiente = null;
+            await CargarAsync();
+        }
+        else
+        {
+            mensajeError = resultado.ErrorCode;
+        }
+    }
+}

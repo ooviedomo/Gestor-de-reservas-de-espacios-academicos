@@ -13,7 +13,7 @@ public sealed record RegistrarSpaceCommand(
     TimeOnly Cierre);
 
 /// <summary>ESP-001: registra un espacio y devuelve códigos de error estables.</summary>
-public sealed class RegistrarSpace(ISpaceRepository repository, IUnitOfWork unitOfWork)
+public sealed class RegistrarSpace(ISpaceRepository repository, IUnitOfWork unitOfWork) : IRegistrarSpace
 {
     public async Task<Result<Guid>> HandleAsync(
         RegistrarSpaceCommand command,

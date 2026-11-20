@@ -14,7 +14,7 @@ public sealed record EditarSpaceCommand(
     TimeOnly Cierre);
 
 /// <summary>ESP-002: actualiza los atributos de un espacio sin tocar sus reservas.</summary>
-public sealed class EditarSpace(ISpaceRepository repository, IUnitOfWork unitOfWork)
+public sealed class EditarSpace(ISpaceRepository repository, IUnitOfWork unitOfWork) : IEditarSpace
 {
     public async Task<Result> HandleAsync(
         EditarSpaceCommand command,

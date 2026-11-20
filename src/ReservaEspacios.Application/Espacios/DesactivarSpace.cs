@@ -8,7 +8,7 @@ public sealed record DesactivarSpaceCommand(Guid Id);
 /// <summary>
 /// ESP-002: oculta el espacio de nuevas consultas sin eliminar sus reservas existentes.
 /// </summary>
-public sealed class DesactivarSpace(ISpaceRepository repository, IUnitOfWork unitOfWork)
+public sealed class DesactivarSpace(ISpaceRepository repository, IUnitOfWork unitOfWork) : IDesactivarSpace
 {
     public async Task<Result> HandleAsync(
         DesactivarSpaceCommand command,

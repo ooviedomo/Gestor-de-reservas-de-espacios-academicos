@@ -6,7 +6,7 @@ namespace ReservaEspacios.Application.Espacios;
 public sealed record ReactivarSpaceCommand(Guid Id);
 
 /// <summary>ESP-002: devuelve el espacio al catálogo y a las consultas de disponibilidad.</summary>
-public sealed class ReactivarSpace(ISpaceRepository repository, IUnitOfWork unitOfWork)
+public sealed class ReactivarSpace(ISpaceRepository repository, IUnitOfWork unitOfWork) : IReactivarSpace
 {
     public async Task<Result> HandleAsync(
         ReactivarSpaceCommand command,
