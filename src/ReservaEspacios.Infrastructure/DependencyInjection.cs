@@ -3,10 +3,12 @@ using Microsoft.Extensions.DependencyInjection;
 using ReservaEspacios.Application.Common;
 using ReservaEspacios.Application.Disponibilidad;
 using ReservaEspacios.Application.Espacios;
+using ReservaEspacios.Application.Reservas;
 using ReservaEspacios.Infrastructure.Disponibilidad;
 using ReservaEspacios.Infrastructure.Espacios;
 using ReservaEspacios.Infrastructure.Identity;
 using ReservaEspacios.Infrastructure.Persistence;
+using ReservaEspacios.Infrastructure.Reservas;
 using ReservaEspacios.Application.Usuarios;
 
 namespace ReservaEspacios.Infrastructure;
@@ -20,6 +22,9 @@ public static class DependencyInjection
         services.AddDbContext<ReservaEspaciosDbContext>(options =>
             options.UseNpgsql(connectionString));
         services.AddScoped<ISpaceRepository, SpaceRepository>();
+        services.AddScoped<ReservaRepository>();
+        services.AddScoped<IReservaRepository>(provider => new TraductorErroresReservaDecorator(
+            provider.GetRequiredService<ReservaRepository>()));
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IDisponibilidadRepository, StubDisponibilidadRepository>();
         services.AddScoped<IUsuarioIdentityService, IdentityUsuarioService>();

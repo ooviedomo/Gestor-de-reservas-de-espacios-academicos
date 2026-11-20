@@ -1,6 +1,7 @@
 using ReservaEspacios.Application.Autorizacion;
 using ReservaEspacios.Application.Common;
 using ReservaEspacios.Application.Espacios;
+using ReservaEspacios.Application.Reservas;
 using ReservaEspacios.Application.Usuarios;
 using ReservaEspacios.Domain.Common;
 
@@ -90,13 +91,14 @@ public static class ApiEndpoints
                 : NotImplemented("El historial se incorpora en la tarea 4.3.");
         });
 
-        app.MapPost("/api/reservas", (
-            GuardiaOperacionesProtegidas guardia) =>
+        app.MapPost("/api/reservas", async (
+            CrearReservaCommand command,
+            CrearReserva crear) =>
         {
-            var verificacion = guardia.VerificarCrearReserva();
-            return !verificacion.IsSuccess
-                ? Error(verificacion.ErrorCode)
-                : NotImplemented("CrearReserva se incorpora en la tarea 3.2.");
+            var resultado = await crear.HandleAsync(command);
+            return resultado.IsSuccess
+                ? Results.Created($"/api/reservas/{resultado.Value}", new { id = resultado.Value })
+                : Error(resultado.ErrorCode);
         });
 
         app.MapPost("/api/reservas/{reservaId:guid}/aprobacion", (
@@ -134,6 +136,7 @@ public static class ApiEndpoints
         {
             DomainErrors.NoAutenticado => StatusCodes.Status401Unauthorized,
             DomainErrors.NoAutorizado => StatusCodes.Status403Forbidden,
+            DomainErrors.SolapeDetectado => StatusCodes.Status409Conflict,
             _ => StatusCodes.Status400BadRequest
         });
 

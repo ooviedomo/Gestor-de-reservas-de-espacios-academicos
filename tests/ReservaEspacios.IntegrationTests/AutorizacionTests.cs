@@ -88,8 +88,8 @@ public sealed class AutorizacionTests(PostgresFixture fixture) : IClassFixture<P
         using var factory = CrearFactory(Rol.Solicitante);
         var client = factory.CreateClient();
 
-        var creacion = await client.PostAsJsonAsync("/api/reservas", new { });
-        creacion.StatusCode.Should().Be(HttpStatusCode.NotImplemented);
+        var creacion = await client.PostAsJsonAsync("/api/reservas", ComandoReservaValido());
+        creacion.StatusCode.Should().Be(HttpStatusCode.Created);
 
         await DevolverError(
             await client.GetAsync("/api/auditoria"),
@@ -196,6 +196,15 @@ public sealed class AutorizacionTests(PostgresFixture fixture) : IClassFixture<P
         "Bloque A",
         new TimeOnly(8, 0),
         new TimeOnly(18, 0));
+
+    private static object ComandoReservaValido() => new
+    {
+        spaceId = Guid.NewGuid(),
+        inicio = "2026-11-20T15:00:00Z",
+        fin = "2026-11-20T16:00:00Z",
+        proposito = "Clase de laboratorio",
+        asistentes = 20
+    };
 
     private static CrearUsuarioPrivilegiadoCommand ComandoUsuario(Rol rol) => new(
         "Usuario creado por administrador",

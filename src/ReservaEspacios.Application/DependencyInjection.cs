@@ -3,6 +3,7 @@ using ReservaEspacios.Application.Autorizacion;
 using ReservaEspacios.Application.Disponibilidad;
 using ReservaEspacios.Application.Espacios;
 using ReservaEspacios.Application.Facade;
+using ReservaEspacios.Application.Reservas;
 using ReservaEspacios.Application.Usuarios;
 
 namespace ReservaEspacios.Application;
@@ -29,7 +30,8 @@ public static class DependencyInjection
         services.AddScoped<IConsultarDisponibilidad, ConsultarDisponibilidad>();
         services.AddScoped<IReservaEspaciosFacade, ReservaEspaciosFacade>();
 
-        // Command pattern: un manejador por caso de uso de usuarios.
+        // Command pattern: un manejador por caso de uso de reservas y usuarios.
+        services.AddScoped<CrearReserva>();
         services.AddScoped<RegistrarSolicitante>();
         services.AddScoped<CrearUsuarioPrivilegiado>();
         services.AddScoped<CambiarRolUsuario>();
