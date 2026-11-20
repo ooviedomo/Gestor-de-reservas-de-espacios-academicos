@@ -22,6 +22,17 @@ public sealed class TraductorErroresReservaTests
     }
 
     [Fact]
+    public void TC_RES_002_Fallo_de_serializacion_se_traduce_a_SOLAPE_DETECTADO()
+    {
+        var excepcion = TraductorErroresReserva.Traducir(
+            TraductorErroresReserva.SqlStateSerializationFailure, null);
+
+        excepcion.Should().NotBeNull();
+        excepcion!.Code.Should().Be(DomainErrors.SolapeDetectado);
+        excepcion.Message.Should().NotContain(TraductorErroresReserva.SqlStateSerializationFailure);
+    }
+
+    [Fact]
     public void TC_RES_002_Otra_restriccion_no_se_traduce()
     {
         TraductorErroresReserva.Traducir("23P01", "otra_restriccion").Should().BeNull();

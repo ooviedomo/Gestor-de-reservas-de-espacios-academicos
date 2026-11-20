@@ -1,4 +1,3 @@
-using Npgsql;
 using ReservaEspacios.Application.Reservas;
 using ReservaEspacios.Domain.Reservas;
 
@@ -6,7 +5,8 @@ namespace ReservaEspacios.Infrastructure.Reservas;
 
 /// <summary>
 /// Decorator (ADR-002): traduce el error SQL crudo de la restricción de exclusión
-/// al código `SOLAPE_DETECTADO` definido en Application, antes de que llegue a la API.
+/// —y un fallo de serialización— al código `SOLAPE_DETECTADO` definido en Application,
+/// antes de que llegue a la API. La transacción aplica la misma traducción al confirmar.
 /// </summary>
 public sealed class TraductorErroresReservaDecorator(IReservaRepository inner) : IReservaRepository
 {
@@ -16,13 +16,9 @@ public sealed class TraductorErroresReservaDecorator(IReservaRepository inner) :
         {
             await inner.AddAsync(reserva, cancellationToken);
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-            // EF Core envuelve la PostgresException en DbUpdateException al llamar a SaveChanges.
-            var postgres = ex as PostgresException ?? ex.InnerException as PostgresException;
-            var traducido = postgres is null
-                ? null
-                : TraductorErroresReserva.Traducir(postgres.SqlState, postgres.ConstraintName);
+            var traducido = TraductorPostgresReserva.Traducir(exception);
             if (traducido is null)
             {
                 throw;

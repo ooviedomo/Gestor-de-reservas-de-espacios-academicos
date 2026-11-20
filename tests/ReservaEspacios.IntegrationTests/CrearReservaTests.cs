@@ -86,6 +86,28 @@ public sealed class CrearReservaTests(PostgresFixture fixture) : IClassFixture<P
     }
 
     [Fact]
+    public async Task TC_RES_002_Dos_solicitudes_concurrentes_una_aceptada_y_una_rechazada()
+    {
+        var espacio = await SembrarEspacioAsync();
+        // Dos solicitantes distintos, con scopes y DbContexts independientes.
+        using var factoryUno = CrearFactory(Guid.NewGuid());
+        using var factoryDos = CrearFactory(Guid.NewGuid());
+        var clienteUno = factoryUno.CreateClient();
+        var clienteDos = factoryDos.CreateClient();
+
+        var respuestas = await Task.WhenAll(
+            clienteUno.PostAsJsonAsync("/api/reservas", Comando(espacio)),
+            clienteDos.PostAsJsonAsync("/api/reservas", Comando(espacio)));
+
+        respuestas.Count(r => r.StatusCode == HttpStatusCode.Created).Should().Be(1);
+        var rechazada = respuestas.Single(r => r.StatusCode == HttpStatusCode.Conflict);
+        await DevolverError(rechazada, HttpStatusCode.Conflict, DomainErrors.SolapeDetectado);
+
+        await using var contexto = fixture.CreateContext();
+        (await contexto.Reservations.CountAsync(r => r.SpaceId == espacio)).Should().Be(1);
+    }
+
+    [Fact]
     public async Task TC_RES_002_Reservas_contiguas_son_aceptadas()
     {
         var espacio = await SembrarEspacioAsync();
@@ -126,12 +148,13 @@ public sealed class CrearReservaTests(PostgresFixture fixture) : IClassFixture<P
         respuesta.StatusCode.Should().Be(HttpStatusCode.Created);
     }
 
-    private WebApplicationFactory<Program> CrearFactory() =>
+    private WebApplicationFactory<Program> CrearFactory(Guid? usuarioId = null) =>
         new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
         {
             builder.UseSetting("ConnectionStrings:ReservaEspacios", fixture.ConnectionString);
             builder.ConfigureTestServices(servicios =>
-                servicios.AddSingleton<IUsuarioActual>(new UsuarioSolicitante(Guid.NewGuid())));
+                servicios.AddSingleton<IUsuarioActual>(
+                    new UsuarioSolicitante(usuarioId ?? Guid.NewGuid())));
         });
 
     private async Task<Guid> SembrarEspacioAsync(int capacidad = 30)
