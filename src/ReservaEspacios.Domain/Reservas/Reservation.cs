@@ -29,6 +29,16 @@ public sealed class Reservation
                 DomainErrors.RangoInvalido, "El inicio debe ser anterior al fin.");
         }
 
+        // RES-005: invariante del agregado. Se comprueba aquí, y no en la cadena de
+        // validadores, para que cualquier vía de creación respete el límite de cuatro
+        // horas consecutivas. El intervalo sigue siendo semiabierto [inicio, fin).
+        if (fin - inicio > TimeSpan.FromHours(4))
+        {
+            throw new DomainException(
+                DomainErrors.DuracionMaximaExcedida,
+                "Una reserva no puede durar más de cuatro horas consecutivas.");
+        }
+
         ArgumentException.ThrowIfNullOrWhiteSpace(proposito);
 
         Id = id;

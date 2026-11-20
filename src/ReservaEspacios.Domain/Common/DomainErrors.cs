@@ -22,6 +22,7 @@ public static class DomainErrors
     public const string EspacioInactivo = "ESPACIO_INACTIVO";
     public const string FueraDeHorario = "FUERA_DE_HORARIO";
     public const string CapacidadExcedida = "CAPACIDAD_EXCEDIDA";
+    public const string DuracionMaximaExcedida = "DURACION_MAXIMA_EXCEDIDA";
     public const string MotivoObligatorio = "MOTIVO_OBLIGATORIO";
     public const string ReservaNoEncontrada = "RESERVA_NO_ENCONTRADA";
     public const string UsuarioNoEncontrado = "USUARIO_NO_ENCONTRADO";

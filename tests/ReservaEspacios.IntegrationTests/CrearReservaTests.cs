@@ -61,6 +61,38 @@ public sealed class CrearReservaTests(PostgresFixture fixture) : IClassFixture<P
     }
 
     [Fact]
+    public async Task TC_RES_005_Cuatro_horas_exactas_crea_la_reserva()
+    {
+        var espacio = await SembrarEspacioAsync();
+        using var factory = CrearFactory();
+        var client = factory.CreateClient();
+
+        var respuesta = await client.PostAsJsonAsync(
+            "/api/reservas", Comando(espacio, Inicio, Inicio.AddHours(4)));
+
+        respuesta.StatusCode.Should().Be(HttpStatusCode.Created);
+        await using var contexto = fixture.CreateContext();
+        var reserva = await contexto.Reservations.SingleAsync(r => r.SpaceId == espacio);
+        reserva.Fin.Should().Be(Inicio.AddHours(4));
+    }
+
+    [Fact]
+    public async Task TC_RES_005_Mas_de_cuatro_horas_devuelve_DURACION_MAXIMA_EXCEDIDA()
+    {
+        var espacio = await SembrarEspacioAsync();
+        using var factory = CrearFactory();
+        var client = factory.CreateClient();
+
+        var respuesta = await client.PostAsJsonAsync(
+            "/api/reservas", Comando(espacio, Inicio, Inicio.AddHours(4).AddMinutes(1)));
+
+        await DevolverError(respuesta, HttpStatusCode.BadRequest,
+            DomainErrors.DuracionMaximaExcedida);
+        await using var contexto = fixture.CreateContext();
+        (await contexto.Reservations.CountAsync(r => r.SpaceId == espacio)).Should().Be(0);
+    }
+
+    [Fact]
     public async Task TC_RES_001_Disponibilidad_cambiada_antes_de_confirmar_devuelve_SOLAPE_DETECTADO()
     {
         var espacio = await SembrarEspacioAsync();

@@ -40,6 +40,23 @@ public sealed class ReservasComponentsTests
     }
 
     [Fact]
+    public void TC_RES_005_Formulario_alta_muestra_DURACION_MAXIMA_EXCEDIDA()
+    {
+        using var ctx = new BunitContext();
+        var crear = new Mock<ICommandHandler<CrearReservaCommand, Guid>>();
+        crear.Setup(x => x.HandleAsync(
+                It.IsAny<CrearReservaCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result<Guid>.Failure(DomainErrors.DuracionMaximaExcedida));
+        RegistrarServiciosDeAlta(ctx, crear.Object);
+
+        var cut = ctx.Render<SolicitarReserva>();
+        cut.Find("form").Submit();
+
+        cut.WaitForAssertion(() => cut.Find("[data-testid='error']")
+            .TextContent.Trim().Should().Be(DomainErrors.DuracionMaximaExcedida));
+    }
+
+    [Fact]
     public void TC_RES_001_Formulario_alta_valida_rango_invalido_localmente()
     {
         using var ctx = new BunitContext();

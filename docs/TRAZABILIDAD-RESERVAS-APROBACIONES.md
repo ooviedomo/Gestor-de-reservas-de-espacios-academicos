@@ -102,6 +102,21 @@ Los nombres son los de los métodos de prueba en `tests/`.
 | Motivo de rechazo en el historial | `TC_RES_004_Motivo_de_rechazo_aparece_en_el_historial`, `TC_RES_004_Motivo_de_rechazo_y_rol_del_administrador` |
 | Acceso anónimo y páginas Blazor | `TC_RES_004_Sin_autenticacion_devuelve_NO_AUTENTICADO`, `TC_RES_004_Paginas_de_aprobacion_e_historial_responden_200` (2 rutas) |
 
+## RES-005 — Límite de duración consecutiva
+
+| Escenario del spec | Pruebas |
+| --- | --- |
+| Cuatro horas exactas | `TC_RES_005_Cuatro_horas_exactas_crea_la_reserva` (unitaria del agregado e integración HTTP) |
+| Más de cuatro horas | `TC_RES_005_Mas_de_cuatro_horas_devuelve_DURACION_MAXIMA_EXCEDIDA` (unitaria del agregado, unitaria del comando e integración HTTP) |
+| Límite aplicado a todos los espacios | `TC_RES_005_Mas_de_cuatro_horas_devuelve_DURACION_MAXIMA_EXCEDIDA` (el invariante del agregado no depende de `EspacioTipo`) |
+| Sin efecto retroactivo | `TC_RES_004_Filtro_por_estado`, `TC_RES_004_Vista_envia_los_filtros_al_consultar`; sin migración ni cancelación automática |
+| Código visible en la UI | `TC_RES_005_Formulario_alta_muestra_DURACION_MAXIMA_EXCEDIDA` |
+| Orden de errores | `TC_RES_005_Rango_inverso_de_mas_de_cuatro_horas_mantiene_RANGO_INVALIDO` |
+
+Patrón: no se añade ninguno a ADR-002. La regla es un invariante de la entidad
+`Reservation`; se descarta un `ValidadorDuracionMaxima` en la cadena para evitar dos
+fuentes de verdad (ver `design.md` del change).
+
 ## APR-001 — Aprobación y rechazo de solicitudes
 
 | Escenario del spec | Pruebas |
@@ -139,11 +154,22 @@ Los nombres son los de los métodos de prueba en `tests/`.
 
 Los nueve patrones exigidos por la tarea 5.3 están cubiertos; se añade **Decorator** como
 décimo patrón de ADR-002 porque el repositorio de reservas lo reutiliza en este change.
+`RES-005` no incorpora patrones nuevos: refuerza la entidad `Reservation`.
 
 ## Verificación ejecutada
+
+### Change `add-reservas-y-aprobaciones`
 
 - `dotnet build ReservaEspacios.sln`: 0 advertencias, 0 errores.
 - `dotnet format ReservaEspacios.sln --verify-no-changes`: sin cambios.
 - `dotnet test ReservaEspacios.sln`: **271** pruebas superadas (169 unitarias, 21 bUnit, 81 integración).
 - Cobertura de líneas consolidada (coverlet): **93.9%** (3461/3686). Por ensamblado: Application 94.7% (715/755), Domain 92.7% (316/341), Infrastructure 96.0% (1901/1980), Web 86.7% (529/610).
 - `openspec validate add-reservas-y-aprobaciones --strict`: válido.
+
+### Change `add-limite-duracion-reserva`
+
+- `dotnet format ReservaEspacios.sln --verify-no-changes --no-restore`: sin cambios.
+- `dotnet build ReservaEspacios.sln`: 0 advertencias, 0 errores.
+- `dotnet test ReservaEspacios.sln`: **374** pruebas superadas (215 unitarias, 59 bUnit, 100 integración).
+- Cobertura consolidada (coverlet + ReportGenerator): **95.2%** de líneas (5210/5467) y **79.5%** de ramas (729/916). Por ensamblado: Application 96.6%, Domain 98.1%, Infrastructure 96.4%, Web 88.7%.
+- `openspec validate add-limite-duracion-reserva --strict` y `openspec validate --all --strict`: válidos.

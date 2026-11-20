@@ -83,6 +83,17 @@ public sealed class CrearReservaTests
     }
 
     [Fact]
+    public async Task TC_RES_005_Mas_de_cuatro_horas_devuelve_DURACION_MAXIMA_EXCEDIDA()
+    {
+        var resultado = await _sut.HandleAsync(
+            Comando() with { Fin = Inicio.AddHours(4).AddMinutes(1) });
+
+        resultado.ErrorCode.Should().Be(DomainErrors.DuracionMaximaExcedida);
+        _repository.Verify(x => x.AddAsync(
+            It.IsAny<Reservation>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
     public async Task TC_RES_001_Capacidad_excedida_no_abre_transaccion()
     {
         var resultado = await _sut.HandleAsync(Comando() with { Asistentes = 35 });

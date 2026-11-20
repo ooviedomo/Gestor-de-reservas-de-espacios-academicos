@@ -1,7 +1,7 @@
 # Registro de uso de IA
 
 - **Proyecto:** `ReservaEspacios`
-- **Alcance:** fases 2 y 3 (revisión de especificaciones, implementación asistida y cierre del change `add-reservas-y-aprobaciones`), changes `add-interfaz-de-acceso-y-navegacion`, `add-notificaciones-auditoria-y-reportes`, `fix-login-cookie-interactive-server` y `fix-salida-y-historial-reservas`
+- **Alcance:** fases 2, 3 y 4 (revisión de especificaciones, implementación asistida, gestión de cambios y cierre del change `add-reservas-y-aprobaciones`), changes `add-interfaz-de-acceso-y-navegacion`, `add-notificaciones-auditoria-y-reportes`, `fix-login-cookie-interactive-server`, `fix-salida-y-historial-reservas` y `add-limite-duracion-reserva`
 - **Base:** `PLAN_INGENIERIA.md` §6.3–6.5. Este documento **no modifica** el plan; las decisiones nuevas están en `docs/adr/` y en el `design.md` del change.
 - **Estado:** aprobación del estudiante **PENDIENTE** (ver §4).
 
@@ -38,6 +38,9 @@ Los prompts siguientes son **representativos**: parafrasean las instrucciones re
 | P-25 | Salida y formato / spec | «Haz que Salir vuelva al inicio, muestra la hora en HH:mm también en los formularios y pon un botón para que el solicitante cancele desde cada fila del historial» | `openspec/changes/fix-salida-y-historial-reservas/` con `UI-004` modificada y `UI-005`/`UI-006` añadidas, `design.md` y `tasks.md` | `openspec validate fix-salida-y-historial-reservas --strict`: válido |
 | P-26 | Salida y formato / Web | «Añade un endpoint de formulario para cerrar sesión y redirigir, y un formateador único en America/Bogota para tablas y formularios» | `POST /acceso/cerrar-sesion`, `NavMenu.razor`, `FormatoFechaHora`, columnas `Fecha`, campos `type="time"` con ayuda `HH:mm` | 9 pruebas bUnit/unitarias de `UI-005` y `UI-004`; 5 pruebas HTTP del flujo de acceso, incluida la redirección `302` a `/` |
 | P-27 | Historial / cancelación | «Reutiliza CancelarReservaCommand para cancelar desde el historial, mostrando el botón solo en reservas propias cancelables» | `SolicitanteId` en `HistorialReservaDto`, columna de acción con motivo por fila en `HistorialReservas.razor` | 3 pruebas bUnit de visibilidad, motivo obligatorio, envío y recarga; 58 pruebas bUnit del proyecto en verde |
+| P-28 | Fase 4 / spec | «Gestiona como cambio OpenSpec la regla de no reservar más de cuatro horas consecutivas; interpreta la regla por reserva individual y haz primero un commit de los artefactos» | `openspec/changes/add-limite-duracion-reserva/` con `RES-005`, `design.md`, `tasks.md` y commit `a7e1a2b` | `openspec validate add-limite-duracion-reserva --strict`: válido; sin editar `PLAN_INGENIERIA.md` |
+| P-29 | Fase 4 / dominio y regresiones | «Implementa el límite como invariante de Reservation con DURACION_MAXIMA_EXCEDIDA, sin añadir un validador a la cadena, y cubre la frontera de 4 h en dominio, comando, endpoint y UI» | `DomainErrors.DuracionMaximaExcedida`, invariante en `Reservation`, `ReservaDuracionTests` y regresiones en las tres suites de pruebas | 7 pruebas nuevas en verde; `RANGO_INVALIDO` sigue teniendo prioridad para rangos inversos |
+| P-30 | Fase 4 / cierre | «Actualiza trazabilidad y registro de IA, verifica formato/build/suite/cobertura y sincroniza y archiva el change sin pushear» | `docs/TRAZABILIDAD-RESERVAS-APROBACIONES.md`, este documento, spec principal sincronizada y change archivado | 374 pruebas; cobertura 95.2% líneas / 79.5% ramas; `openspec validate --all --strict`: 11/11 válidos |
 
 ## 2. Salidas rechazadas o corregidas durante la revisión
 
@@ -62,15 +65,17 @@ Los prompts siguientes son **representativos**: parafrasean las instrucciones re
 | Expectativa de auditoría vacía en `AutorizacionTests` | Otras pruebas de la misma clase siembran registros en el esquema | Comprobar que la consulta devuelve historial no vacío |
 | Aserciones bUnit con decimales y fechas literales | Cultura `es` (`1,5`) y zona local (`-5h`) rompían las pruebas | Usar `ToString()` de la cultura actual y comparar la fecha local |
 | `design.md` afirmaba que solo se concedían `GRANT INSERT/SELECT` | La migración usa `REVOKE ... FROM PUBLIC` y trigger porque el usuario es propietario | Alinear el `design.md` con la migración sin editar `PLAN_INGENIERIA.md` |
+| Añadir `ValidadorDuracionMaxima` a la cadena de creación | Duplicaba la regla en la cadena y en el agregado, con dos fuentes de verdad y posible evasión por otras vías | Invariante único en el constructor de `Reservation`, según `design.md` de Fase 4 |
+| Ejecutar `dotnet test` de varios proyectos en paralelo | `MSB3026`/`CS2012`: DLL bloqueada por `VBCSCompiler` | Ejecutar la solución en secuencia con `-m:1` |
 
 ## 3. Verificación global aplicada a todo el código generado
 
-- **Revisión humana del diff** antes de cada commit (`5455661`, `2cf104b`, `35346fb`, `725c2ce`, `9be23f4`, `0a6f902`, `a45b2b3`, los del change de interfaz y los del change actual).
+- **Revisión humana del diff** antes de cada commit (`5455661`, `2cf104b`, `35346fb`, `725c2ce`, `9be23f4`, `0a6f902`, `a45b2b3`, los del change de interfaz, `a7e1a2b` y los del change actual).
 - `dotnet build`: 0 advertencias, 0 errores.
 - `dotnet format --verify-no-changes --no-restore`: sin cambios.
-- `dotnet test`: **367** pruebas superadas (211 unitarias, 58 bUnit, 98 integración).
-- Cobertura de líneas consolidada (coverlet): **95.1%** (5196/5462); ramas 79.1% (723/914), por encima del umbral del 80% de la tarea 5.1.
-- `openspec validate add-reservas-y-aprobaciones --strict`, `openspec validate add-interfaz-de-acceso-y-navegacion --strict`, `openspec validate add-notificaciones-auditoria-y-reportes --strict`, `openspec validate fix-login-cookie-interactive-server --strict` y `openspec validate fix-salida-y-historial-reservas --strict`: válidos.
+- `dotnet test`: **374** pruebas superadas (215 unitarias, 59 bUnit, 100 integración).
+- Cobertura consolidada (coverlet + ReportGenerator): **95.2%** de líneas (5210/5467); ramas 79.5% (729/916), por encima del umbral del 80% de la tarea 5.1.
+- `openspec validate add-reservas-y-aprobaciones --strict`, `openspec validate add-interfaz-de-acceso-y-navegacion --strict`, `openspec validate add-notificaciones-auditoria-y-reportes --strict`, `openspec validate fix-login-cookie-interactive-server --strict`, `openspec validate fix-salida-y-historial-reservas --strict` y `openspec validate add-limite-duracion-reserva --strict`: válidos. `openspec validate --all --strict`: 11/11 válidos.
 - Migraciones de EF Core revisadas: `btree_gist`, `EXCLUDE ... WHERE estado IN ('PENDIENTE','APROBADA')`, columnas `asistentes`, `motivo_rechazo`, `completado_en`, `ultimo_error`, índices de auditoría y trigger `audit_logs_inmutable`.
 - Dependencias: sin paquetes añadidos a la stack del plan §3.2.
 - Trazabilidad requisito → prueba: `docs/TRAZABILIDAD-ESPACIOS-DISPONIBILIDAD.md`, `docs/TRAZABILIDAD-RESERVAS-APROBACIONES.md`, `docs/TRAZABILIDAD-INTERFAZ-ACCESO.md` y `docs/TRAZABILIDAD-NOTIFICACIONES-AUDITORIA-REPORTES.md`.
@@ -97,6 +102,9 @@ De acuerdo con `PLAN_INGENIERIA.md` §6.5, la aprobación de especificaciones, r
 - [ ] He revisado el diff del change `fix-salida-y-historial-reservas`.
 - [ ] Acepto que «Cerrar sesión» redirija a la portada, que la hora se muestre en `HH:mm` y que la cancelación reutilice el comando existente.
 - [ ] Autorizo archivar `fix-salida-y-historial-reservas`.
+- [ ] He revisado el diff del change `add-limite-duracion-reserva`.
+- [ ] Acepto el límite de cuatro horas por reserva individual, sin efecto retroactivo y sin patrones nuevos.
+- [ ] Autorizo archivar `add-limite-duracion-reserva`.
 
 **Nombre del estudiante:** ______________________________________
 
