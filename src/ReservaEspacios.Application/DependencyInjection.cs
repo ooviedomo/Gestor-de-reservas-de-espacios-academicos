@@ -4,6 +4,7 @@ using ReservaEspacios.Application.Disponibilidad;
 using ReservaEspacios.Application.Espacios;
 using ReservaEspacios.Application.Facade;
 using ReservaEspacios.Application.Reservas;
+using ReservaEspacios.Application.Reservas.Validacion;
 using ReservaEspacios.Application.Usuarios;
 
 namespace ReservaEspacios.Application;
@@ -28,7 +29,18 @@ public static class DependencyInjection
         services.AddScoped<IReactivarSpace>(sp => sp.GetRequiredService<GuardiasAdministracionEspacios>());
         services.AddScoped<IConsultarCatalogo, ConsultarCatalogo>();
         services.AddScoped<IConsultarDisponibilidad, ConsultarDisponibilidad>();
+        services.AddScoped<IHorarioEspacio, HorarioEspacio>();
+        services.AddScoped<ISolapeReservas, SolapeReservas>();
         services.AddScoped<IReservaEspaciosFacade, ReservaEspaciosFacade>();
+
+        // Chain of Responsibility y Strategy de RES-001 (tarea 3.2).
+        services.AddScoped<IValidacionPorTipoEspacio, ValidacionPorTipoEspacio>();
+        services.AddScoped<ValidadorRango>();
+        services.AddScoped<ValidadorEspacioActivo>();
+        services.AddScoped<ValidadorHorario>();
+        services.AddScoped<ValidadorCapacidad>();
+        services.AddScoped<ValidadorSolape>();
+        services.AddScoped<CadenaValidacionCrearReserva>();
 
         // Command pattern: un manejador por caso de uso de reservas y usuarios.
         services.AddScoped<CrearReserva>();

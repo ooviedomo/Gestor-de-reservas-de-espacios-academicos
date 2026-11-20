@@ -20,8 +20,8 @@ namespace ReservaEspacios.IntegrationTests;
 /// AUTH-001/002/003 ejecutados sobre el host real con WebApplicationFactory.
 /// La autenticación en sí se verifica en TC-USR-003-*; aquí se inyecta el usuario
 /// autenticado para que las pruebas se centren en la matriz de permisos y sus guards.
-/// Las respuestas 501 confirman que el guard otorgó el permiso; la operación de
-/// negocio se implementa en tareas posteriores del change.
+/// Las respuestas 501 confirman que el guard otorgó el permiso para operaciones
+/// cuyo caso de uso se implementa en tareas posteriores del change.
 /// </summary>
 public sealed class AutorizacionTests(PostgresFixture fixture) : IClassFixture<PostgresFixture>
 {
@@ -87,8 +87,9 @@ public sealed class AutorizacionTests(PostgresFixture fixture) : IClassFixture<P
     {
         using var factory = CrearFactory(Rol.Solicitante);
         var client = factory.CreateClient();
+        var espacio = await SembrarEspacioAsync();
 
-        var creacion = await client.PostAsJsonAsync("/api/reservas", ComandoReservaValido());
+        var creacion = await client.PostAsJsonAsync("/api/reservas", ComandoReservaValido(espacio));
         creacion.StatusCode.Should().Be(HttpStatusCode.Created);
 
         await DevolverError(
@@ -197,9 +198,24 @@ public sealed class AutorizacionTests(PostgresFixture fixture) : IClassFixture<P
         new TimeOnly(8, 0),
         new TimeOnly(18, 0));
 
-    private static object ComandoReservaValido() => new
+    private async Task<Guid> SembrarEspacioAsync()
     {
-        spaceId = Guid.NewGuid(),
+        await using var contexto = fixture.CreateContext();
+        var espacio = new Space(
+            Guid.NewGuid(),
+            $"Laboratorio auth {Guid.NewGuid():N}",
+            EspacioTipo.Laboratorio,
+            30,
+            "Bloque A",
+            new HorarioAtencion(new TimeOnly(8, 0), new TimeOnly(18, 0)));
+        contexto.Spaces.Add(espacio);
+        await contexto.SaveChangesAsync();
+        return espacio.Id;
+    }
+
+    private static object ComandoReservaValido(Guid spaceId) => new
+    {
+        spaceId,
         inicio = "2026-11-20T15:00:00Z",
         fin = "2026-11-20T16:00:00Z",
         proposito = "Clase de laboratorio",
@@ -237,7 +253,9 @@ public sealed class AutorizacionTests(PostgresFixture fixture) : IClassFixture<P
 
     private sealed class UsuarioAutenticado(Rol rol) : IUsuarioActual
     {
+        private readonly Guid _id = Guid.NewGuid();
+
         public Rol Rol { get; } = rol;
-        public Guid? UsuarioId => Guid.NewGuid();
+        public Guid? UsuarioId => _id;
     }
 }

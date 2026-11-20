@@ -1,7 +1,6 @@
 using ReservaEspacios.Application.Common;
 using ReservaEspacios.Application.Espacios;
 using ReservaEspacios.Domain.Common;
-using ReservaEspacios.Domain.Reservas;
 
 namespace ReservaEspacios.Application.Disponibilidad;
 
@@ -20,12 +19,18 @@ public interface IConsultarDisponibilidad
 /// <summary>
 /// DISP-001 a DISP-003: horario de atención en America/Bogota convertido a UTC,
 /// ocupación solo de reservas PENDIENTE/APROBADA e intervalos semiabiertos.
+/// Las reglas de horario y solape se delegan en servicios compartidos con la cadena
+/// de validación de `CrearReserva` (tarea 3.2). Los parámetros opcionales preservan
+/// las pruebas unitarias existentes, que solo mockean los dos puertos originales.
 /// </summary>
 public sealed class ConsultarDisponibilidad(
     ISpaceRepository spaceRepository,
-    IDisponibilidadRepository disponibilidadRepository) : IConsultarDisponibilidad
+    IDisponibilidadRepository disponibilidadRepository,
+    IHorarioEspacio? horario = null,
+    ISolapeReservas? solape = null) : IConsultarDisponibilidad
 {
-    private const string ZonaInstitucional = "America/Bogota";
+    private readonly IHorarioEspacio _horario = horario ?? new HorarioEspacio();
+    private readonly ISolapeReservas _solape = solape ?? new SolapeReservas(disponibilidadRepository);
 
     public async Task<Result<DisponibilidadDto>> HandleAsync(
         ConsultarDisponibilidadCommand command,
@@ -49,46 +54,16 @@ public sealed class ConsultarDisponibilidad(
             return Resultado(EstadosDisponibilidad.NoDisponible, MotivosDisponibilidad.FueraDeHorario);
         }
 
-        var (apertura, cierre) = HorarioEnUtc(space, command.Inicio);
-        if (inicio < apertura || fin > cierre)
+        if (!_horario.Contiene(space, command.Inicio, inicio, fin))
         {
             return Resultado(EstadosDisponibilidad.NoDisponible, MotivosDisponibilidad.FueraDeHorario);
         }
 
-        var reservas = await disponibilidadRepository.ObtenerReservasAsync(
-            space.Id, inicio, fin, cancellationToken);
+        var haySolape = await _solape.HaySolapeAsync(space.Id, inicio, fin, cancellationToken);
 
-        var solape = reservas.Any(reserva =>
-            EsBloqueante(reserva.Estado) &&
-            reserva.Inicio.ToUniversalTime() < fin &&
-            inicio < reserva.Fin.ToUniversalTime());
-
-        return solape
+        return haySolape
             ? Resultado(EstadosDisponibilidad.NoDisponible, MotivosDisponibilidad.SolapeConReserva)
             : Resultado(EstadosDisponibilidad.Disponible, MotivosDisponibilidad.Ninguno);
-    }
-
-    /// <summary>
-    /// DISP-002 delega en la regla canónica de Domain para no duplicar los estados
-    /// bloqueantes entre Application y la entidad (tarea 3.1).
-    /// </summary>
-    private static bool EsBloqueante(string estado) =>
-        EstadoReservaExtensions.DesdeCodigo(estado)?.EsBloqueante() == true;
-
-    private static (DateTimeOffset Apertura, DateTimeOffset Cierre) HorarioEnUtc(
-        Domain.Espacios.Space space,
-        DateTimeOffset referencia)
-    {
-        var zona = TimeZoneInfo.FindSystemTimeZoneById(ZonaInstitucional);
-        var fechaLocal = TimeZoneInfo.ConvertTime(referencia, zona).Date;
-        var aperturaLocal = DateTime.SpecifyKind(
-            fechaLocal.Add(space.Horario.Apertura.ToTimeSpan()), DateTimeKind.Unspecified);
-        var cierreLocal = DateTime.SpecifyKind(
-            fechaLocal.Add(space.Horario.Cierre.ToTimeSpan()), DateTimeKind.Unspecified);
-
-        return (
-            new DateTimeOffset(aperturaLocal, zona.GetUtcOffset(aperturaLocal)).ToUniversalTime(),
-            new DateTimeOffset(cierreLocal, zona.GetUtcOffset(cierreLocal)).ToUniversalTime());
     }
 
     private static Result<DisponibilidadDto> Resultado(string estado, string motivo) =>

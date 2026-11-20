@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using ReservaEspacios.Application.Common;
 using ReservaEspacios.Domain.Common;
+using ReservaEspacios.Domain.Espacios;
 using ReservaEspacios.Domain.Reservas;
 using ReservaEspacios.Domain.Usuarios;
 using Xunit;
@@ -28,6 +29,14 @@ public sealed class SolapeEndpointTests(PostgresFixture fixture) : IClassFixture
         var espacio = Guid.NewGuid();
         await using (var contexto = fixture.CreateContext())
         {
+            // La cadena de RES-001 exige un espacio activo con horario válido.
+            contexto.Spaces.Add(new Space(
+                espacio,
+                $"Laboratorio solape {Guid.NewGuid():N}",
+                EspacioTipo.Laboratorio,
+                30,
+                "Bloque A",
+                new HorarioAtencion(new TimeOnly(8, 0), new TimeOnly(18, 0))));
             contexto.Reservations.Add(new Reservation(
                 Guid.NewGuid(), espacio, Guid.NewGuid(), Inicio, Fin, "Clase existente", 10));
             await contexto.SaveChangesAsync();

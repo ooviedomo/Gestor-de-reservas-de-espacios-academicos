@@ -19,6 +19,8 @@ public static class DomainErrors
     public const string NoAutenticado = "NO_AUTENTICADO";
     public const string SolapeDetectado = "SOLAPE_DETECTADO";
     public const string RangoInvalido = "RANGO_INVALIDO";
+    public const string EspacioInactivo = "ESPACIO_INACTIVO";
+    public const string FueraDeHorario = "FUERA_DE_HORARIO";
     public const string CapacidadExcedida = "CAPACIDAD_EXCEDIDA";
     public const string MotivoObligatorio = "MOTIVO_OBLIGATORIO";
     public const string ReservaNoEncontrada = "RESERVA_NO_ENCONTRADA";

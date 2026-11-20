@@ -1,5 +1,7 @@
 using ReservaEspacios.Application.Autorizacion;
 using ReservaEspacios.Application.Common;
+using ReservaEspacios.Application.Espacios;
+using ReservaEspacios.Application.Reservas.Validacion;
 using ReservaEspacios.Domain.Common;
 using ReservaEspacios.Domain.Reservas;
 
@@ -10,17 +12,22 @@ public sealed record CrearReservaCommand(
     DateTimeOffset Inicio,
     DateTimeOffset Fin,
     string Proposito,
-    int Asistentes);
+    int Asistentes) : ICommand;
 
 /// <summary>
-/// RES-001/002: primera versión del caso de uso. La cadena de validadores y la
-/// revalidación `SERIALIZABLE` se incorporan en la tarea 3.2; aquí se garantiza
-/// que el error de la restricción llegue traducido a `SOLAPE_DETECTADO`.
+/// RES-001/002 (Command, ADR-002): valida con la cadena
+/// Rango → EspacioActivo → Horario → Capacidad → Solape, y luego revalida la
+/// disponibilidad dentro de una transacción SERIALIZABLE antes de persistir.
+/// La consulta previa es informativa; la confirmación vuelve a comprobar.
 /// </summary>
 public sealed class CrearReserva(
     IReservaRepository repository,
+    ISpaceRepository spaceRepository,
+    ITransaccionReserva transaccion,
+    CadenaValidacionCrearReserva validadores,
+    ValidadorSolape revalidador,
     GuardiaOperacionesProtegidas guardia,
-    IUsuarioActual usuarioActual)
+    IUsuarioActual usuarioActual) : ICommandHandler<CrearReservaCommand, Guid>
 {
     public async Task<Result<Guid>> HandleAsync(
         CrearReservaCommand command,
@@ -39,17 +46,41 @@ public sealed class CrearReserva(
 
         try
         {
-            var reserva = new Reservation(
-                Guid.NewGuid(),
-                command.SpaceId,
-                usuarioId,
-                command.Inicio,
-                command.Fin,
-                command.Proposito,
-                command.Asistentes);
+            var space = await spaceRepository.GetByIdAsync(command.SpaceId, cancellationToken);
+            var contexto = new ContextoValidacionReserva(command, usuarioId, space);
 
-            await repository.AddAsync(reserva, cancellationToken);
-            return Result<Guid>.Success(reserva.Id);
+            var error = await validadores.ValidarAsync(contexto, cancellationToken);
+            if (error is not null)
+            {
+                return Result<Guid>.Failure(error);
+            }
+
+            Reservation? reserva = null;
+            await transaccion.EjecutarAsync(async token =>
+            {
+                // Revalidación dentro de SERIALIZABLE: otra reserva pudo ocupar la
+                // franja entre la consulta informativa y esta confirmación (RES-001).
+                var errorRevalidacion = await revalidador.ValidarAsync(contexto, token);
+                if (errorRevalidacion is not null)
+                {
+                    throw new DomainException(
+                        errorRevalidacion,
+                        "La franja dejó de estar disponible antes de confirmar.");
+                }
+
+                reserva = new Reservation(
+                    Guid.NewGuid(),
+                    command.SpaceId,
+                    usuarioId,
+                    command.Inicio,
+                    command.Fin,
+                    command.Proposito,
+                    command.Asistentes);
+
+                await repository.AddAsync(reserva, token);
+            }, cancellationToken);
+
+            return Result<Guid>.Success(reserva!.Id);
         }
         catch (DomainException ex)
         {

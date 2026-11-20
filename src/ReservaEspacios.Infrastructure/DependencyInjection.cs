@@ -30,6 +30,7 @@ public static class DependencyInjection
                 provider.GetRequiredService<ReservaRepository>()),
             provider.GetRequiredService<IDisponibilidadCache>()));
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<ITransaccionReserva, TransaccionReserva>();
         services.AddScoped<IDisponibilidadRepository, DisponibilidadRepository>();
         services.AddScoped<IUsuarioIdentityService, IdentityUsuarioService>();
 
