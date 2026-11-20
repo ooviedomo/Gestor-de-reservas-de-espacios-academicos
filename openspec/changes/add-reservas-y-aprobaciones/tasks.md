@@ -14,7 +14,7 @@
 
 ## 3. Creación y cancelación de reservas
 
-- [ ] 3.1 Sustituir el stub `IDisponibilidadRepository` del change anterior por la implementación real sobre `reservations`, eliminando el stub, y verificar que `ConsultarDisponibilidad` refleja las reservas `PENDIENTE`/`APROBADA` persistidas.
+- [x] 3.1 Sustituir el stub `IDisponibilidadRepository` del change anterior por la implementación real sobre `reservations`, eliminando el stub, y verificar que `ConsultarDisponibilidad` refleja las reservas `PENDIENTE`/`APROBADA` persistidas.
 - [ ] 3.2 Implementar `CrearReserva` con revalidación de disponibilidad dentro de una transacción `SERIALIZABLE`, y verificar `TC-RES-001-*` incluido el escenario de disponibilidad cambiada.
 - [ ] 3.3 Implementar la prueba de concurrencia con dos peticiones simultáneas sobre la misma franja y verificar `TC-RES-002-*` (una aceptada, una rechazada).
 - [ ] 3.4 Implementar `CancelarReserva` con motivo obligatorio y permisos por rol, y verificar `TC-RES-003-*`.

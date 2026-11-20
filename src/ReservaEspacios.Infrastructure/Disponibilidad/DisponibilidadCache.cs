@@ -4,8 +4,9 @@ using ReservaEspacios.Application.Disponibilidad;
 namespace ReservaEspacios.Infrastructure.Disponibilidad;
 
 /// <summary>
-/// Caché en memoria del decorator. Se invalida cuando el siguiente change incorpora
-/// la tabla `reservations` y pasan a existir mutaciones que afecten la franja.
+/// Caché en memoria del decorator (ADR-002). <see cref="Invalidar"/> se invoca desde
+/// el Decorator de escritura de reservas para que ninguna franja cacheada sobreviva
+/// a una mutación de su espacio (tarea 3.1).
 /// </summary>
 public sealed class DisponibilidadCache : IDisponibilidadCache
 {
@@ -16,4 +17,12 @@ public sealed class DisponibilidadCache : IDisponibilidadCache
 
     public void Set(DisponibilidadCacheKey key, DisponibilidadDto value) =>
         _entries[key] = value;
+
+    public void Invalidar(Guid spaceId)
+    {
+        foreach (var key in _entries.Keys.Where(k => k.SpaceId == spaceId))
+        {
+            _entries.TryRemove(key, out _);
+        }
+    }
 }

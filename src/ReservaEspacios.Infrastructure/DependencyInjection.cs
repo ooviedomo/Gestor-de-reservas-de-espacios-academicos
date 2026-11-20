@@ -23,10 +23,14 @@ public static class DependencyInjection
             options.UseNpgsql(connectionString));
         services.AddScoped<ISpaceRepository, SpaceRepository>();
         services.AddScoped<ReservaRepository>();
-        services.AddScoped<IReservaRepository>(provider => new TraductorErroresReservaDecorator(
-            provider.GetRequiredService<ReservaRepository>()));
+        // Orden de decorators: traducir el error SQL y, solo si la escritura terminó
+        // bien, invalidar la caché de disponibilidad del espacio (tarea 3.1).
+        services.AddScoped<IReservaRepository>(provider => new InvalidarCacheReservaDecorator(
+            new TraductorErroresReservaDecorator(
+                provider.GetRequiredService<ReservaRepository>()),
+            provider.GetRequiredService<IDisponibilidadCache>()));
         services.AddScoped<IUnitOfWork, UnitOfWork>();
-        services.AddScoped<IDisponibilidadRepository, StubDisponibilidadRepository>();
+        services.AddScoped<IDisponibilidadRepository, DisponibilidadRepository>();
         services.AddScoped<IUsuarioIdentityService, IdentityUsuarioService>();
 
         // El decorator se registra después que el caso de uso en AddApplication(),

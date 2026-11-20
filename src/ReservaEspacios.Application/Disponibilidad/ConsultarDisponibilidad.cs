@@ -1,6 +1,7 @@
 using ReservaEspacios.Application.Common;
 using ReservaEspacios.Application.Espacios;
 using ReservaEspacios.Domain.Common;
+using ReservaEspacios.Domain.Reservas;
 
 namespace ReservaEspacios.Application.Disponibilidad;
 
@@ -67,8 +68,12 @@ public sealed class ConsultarDisponibilidad(
             : Resultado(EstadosDisponibilidad.Disponible, MotivosDisponibilidad.Ninguno);
     }
 
+    /// <summary>
+    /// DISP-002 delega en la regla canónica de Domain para no duplicar los estados
+    /// bloqueantes entre Application y la entidad (tarea 3.1).
+    /// </summary>
     private static bool EsBloqueante(string estado) =>
-        estado is "PENDIENTE" or "APROBADA";
+        EstadoReservaExtensions.DesdeCodigo(estado)?.EsBloqueante() == true;
 
     private static (DateTimeOffset Apertura, DateTimeOffset Cierre) HorarioEnUtc(
         Domain.Espacios.Space space,
