@@ -27,6 +27,7 @@ Los prompts siguientes son **representativos**: parafrasean las instrucciones re
 | P-14 | Interfaz / Web | «Reutiliza AutenticarUsuarioCommand y RegistrarSolicitanteCommand; añade solo el cierre de sesión y el menú por IEvaluadorPermisos» | `ISesionWeb`/`SesionWeb`, `POST /api/autenticacion/logout`, `NavMenu.razor`, `Home.razor`, `Login.razor`, `Registro.razor`, `README.md` | 14 pruebas bUnit y `TC_UI_002_004_Login_cookie_portada_autenticada_y_logout` con `WebApplicationFactory` |
 | P-15 | Interfaz / arranque | «Documenta el arranque local y crea los tres roles sin versionar credenciales» | `tools/ReservaEspacios.Bootstrap`, `README.md` | Variables `BOOTSTRAP_*_EMAIL/PASSWORD`; compilación con 0 errores |
 | P-16 | Interfaz / cierre | «Genera la matriz de trazabilidad del change de interfaz y actualiza el registro de uso de IA» | `docs/TRAZABILIDAD-INTERFAZ-ACCESO.md`, este documento | 286 pruebas; cobertura 94.3%; `openspec validate --all --strict` |
+| P-17 | Interfaz / robustez | «Evita que un fallo al cargar el catálogo derribe el circuito InteractiveServer y muestra un mensaje sin SQL» | `try/catch` en `ConsultarDisponibilidadPage.OnInitializedAsync` y `TC_DISP_001_Componente_muestra_mensaje_si_el_catalogo_falla` | 287 pruebas; cobertura 94.2% |
 
 ## 2. Salidas rechazadas o corregidas durante la revisión
 
@@ -49,8 +50,8 @@ Los prompts siguientes son **representativos**: parafrasean las instrucciones re
 - **Revisión humana del diff** antes de cada commit (`5455661`, `2cf104b`, `35346fb`, `725c2ce`, `9be23f4`, `0a6f902`, `a45b2b3` y los del change de interfaz).
 - `dotnet build ReservaEspacios.sln`: 0 advertencias, 0 errores.
 - `dotnet format ReservaEspacios.sln --verify-no-changes`: sin cambios.
-- `dotnet test ReservaEspacios.sln`: **286** pruebas superadas (169 unitarias, 35 bUnit, 82 integración).
-- Cobertura de líneas consolidada: **94.3%** (3557/3770), por encima del umbral del 80% de la tarea 5.1.
+- `dotnet test ReservaEspacios.sln`: **287** pruebas superadas (169 unitarias, 36 bUnit, 82 integración).
+- Cobertura de líneas consolidada: **94.2%** (3567/3783), por encima del umbral del 80% de la tarea 5.1.
 - `openspec validate add-reservas-y-aprobaciones --strict` y `openspec validate add-interfaz-de-acceso-y-navegacion --strict`: válidos.
 - Migraciones de EF Core revisadas: `btree_gist`, `EXCLUDE ... WHERE estado IN ('PENDIENTE','APROBADA')`, columnas `asistentes`, `motivo_rechazo`, `completado_en`.
 - Dependencias: sin paquetes añadidos a la stack del plan §3.2.

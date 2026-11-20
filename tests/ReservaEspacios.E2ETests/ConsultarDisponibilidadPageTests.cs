@@ -41,4 +41,22 @@ public sealed class ConsultarDisponibilidadPageTests
         cut.Find("[data-testid='motivo']").TextContent.Trim()
             .Should().Be(MotivosDisponibilidad.SolapeConReserva);
     }
+
+    [Fact]
+    public void TC_DISP_001_Componente_muestra_mensaje_si_el_catalogo_falla()
+    {
+        using var ctx = new BunitContext();
+        var facade = new Mock<IReservaEspaciosFacade>();
+        facade.Setup(x => x.ConsultarCatalogo(
+                It.IsAny<FiltroCatalogo>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("42P01: relation \"spaces\" does not exist"));
+        ctx.Services.AddSingleton(facade.Object);
+
+        var cut = ctx.Render<ConsultarDisponibilidadPage>();
+
+        var mensaje = cut.Find("[data-testid='error']").TextContent.Trim();
+        mensaje.Should().Contain("No se pudo cargar el catálogo de espacios");
+        mensaje.Should().NotContain("42P01");
+        mensaje.Should().NotContain("spaces");
+    }
 }

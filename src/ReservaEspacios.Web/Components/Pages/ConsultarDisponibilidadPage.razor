@@ -32,6 +32,11 @@
     <button type="submit" id="consultar">Consultar</button>
 </EditForm>
 
+@if (mensajeError is not null)
+{
+    <p data-testid="error">@mensajeError</p>
+}
+
 @if (resultado is not null)
 {
     <p data-testid="estado">@resultado.Estado</p>
@@ -50,19 +55,37 @@
     private readonly Formulario formulario = new();
     private IReadOnlyList<SpaceCatalogoDto> espacios = Array.Empty<SpaceCatalogoDto>();
     private DisponibilidadDto? resultado;
+    private string? mensajeError;
 
     protected override async Task OnInitializedAsync()
     {
         var filtro = new FiltroCatalogoBuilder().Build();
-        var catalogo = await Facade.ConsultarCatalogo(filtro);
-        espacios = catalogo.IsSuccess
-            ? catalogo.Value ?? Array.Empty<SpaceCatalogoDto>()
-            : Array.Empty<SpaceCatalogoDto>();
-        if (espacios.Count > 0)
+        try
         {
-            formulario.SpaceId = espacios[0].Id;
+            var catalogo = await Facade.ConsultarCatalogo(filtro);
+            if (!catalogo.IsSuccess)
+            {
+                mensajeError = MensajeCatalogoNoDisponible;
+                return;
+            }
+
+            espacios = catalogo.Value ?? Array.Empty<SpaceCatalogoDto>();
+            if (espacios.Count > 0)
+            {
+                formulario.SpaceId = espacios[0].Id;
+            }
+        }
+        catch (Exception)
+        {
+            // Un fallo de base de datos (por ejemplo, migraciones sin aplicar) no debe
+            // derribar el circuito de InteractiveServer ni exponer SQL al navegador.
+            espacios = Array.Empty<SpaceCatalogoDto>();
+            mensajeError = MensajeCatalogoNoDisponible;
         }
     }
+
+    private const string MensajeCatalogoNoDisponible =
+        "No se pudo cargar el catálogo de espacios. Vuelve a intentarlo o contacta con el administrador.";
 
     private async Task ConsultarAsync()
     {
