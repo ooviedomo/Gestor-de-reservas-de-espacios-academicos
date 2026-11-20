@@ -1,0 +1,138 @@
+@page "/reservas/historial"
+@rendermode InteractiveServer
+@using ReservaEspacios.Application.Autorizacion
+@using ReservaEspacios.Application.Common
+@using ReservaEspacios.Application.Reservas
+@using ReservaEspacios.Domain.Common
+@using ReservaEspacios.Domain.Reservas
+@inject ICommandHandler<ConsultarHistorialCommand, IReadOnlyList<HistorialReservaDto>> Historial
+@inject IEvaluadorPermisos Permisos
+@inject IUsuarioActual Actual
+
+<h1>Historial de reservas</h1>
+
+@if (!Permisos.PuedeVerHistorial(Actual.Rol))
+{
+    <p data-testid="error">@DomainErrors.NoAutorizado</p>
+}
+else
+{
+    <div id="filtros">
+        <label for="estado">Estado</label>
+        <select id="estado" value="@estado"
+                @onchange="@(e => estado = e.Value?.ToString() ?? string.Empty)">
+            <option value="">Todos</option>
+            @foreach (var opcion in Estados)
+            {
+                <option value="@opcion">@opcion</option>
+            }
+        </select>
+
+        <label for="desde">Desde</label>
+        <input id="desde" value="@desde"
+               @onchange="@(e => desde = e.Value?.ToString() ?? string.Empty)" />
+
+        <label for="hasta">Hasta</label>
+        <input id="hasta" value="@hasta"
+               @onchange="@(e => hasta = e.Value?.ToString() ?? string.Empty)" />
+
+        <label for="spaceId">Espacio</label>
+        <input id="spaceId" value="@spaceId"
+               @onchange="@(e => spaceId = e.Value?.ToString() ?? string.Empty)" />
+
+        <button id="filtrar" @onclick="AplicarFiltrosAsync">Filtrar</button>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Estado</th>
+                <th>Espacio</th>
+                <th>Inicio</th>
+                <th>Fin</th>
+                <th>Solicitante</th>
+                <th>Actor</th>
+                <th>Rol del actor</th>
+                <th>Motivo de rechazo</th>
+                <th>Motivo de cancelación</th>
+                <th>Aprobado en</th>
+                <th>Cancelado en</th>
+                <th>Completado en</th>
+                <th>Creado en</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var reserva in filas)
+            {
+                <tr data-testid="fila">
+                    <td data-testid="estado-fila">@reserva.Estado</td>
+                    <td>@reserva.Espacio</td>
+                    <td>@reserva.Inicio</td>
+                    <td>@reserva.Fin</td>
+                    <td>@reserva.Solicitante</td>
+                    <td data-testid="actor">@(reserva.Actor ?? "—")</td>
+                    <td data-testid="rol-actor">@(reserva.RolActor ?? "—")</td>
+                    <td data-testid="motivo-rechazo">@(reserva.MotivoRechazo ?? "—")</td>
+                    <td data-testid="motivo-cancelacion">@(reserva.MotivoCancelacion ?? "—")</td>
+                    <td>@(reserva.AprobadoEn?.ToString() ?? "—")</td>
+                    <td>@(reserva.CanceladoEn?.ToString() ?? "—")</td>
+                    <td>@(reserva.CompletadoEn?.ToString() ?? "—")</td>
+                    <td>@reserva.CreadoEn</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    @if (mensajeError is not null)
+    {
+        <p data-testid="error-consulta">@mensajeError</p>
+    }
+}
+
+@code {
+    private static readonly string[] Estados =
+        ["PENDIENTE", "APROBADA", "RECHAZADA", "COMPLETADA", "CANCELADA"];
+
+    private string estado = string.Empty;
+    private string desde = string.Empty;
+    private string hasta = string.Empty;
+    private string spaceId = string.Empty;
+    private IReadOnlyList<HistorialReservaDto> filas = Array.Empty<HistorialReservaDto>();
+    private string? mensajeError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Permisos.PuedeVerHistorial(Actual.Rol))
+        {
+            await CargarAsync();
+        }
+    }
+
+    private async Task AplicarFiltrosAsync()
+    {
+        mensajeError = null;
+        await CargarAsync();
+    }
+
+    private async Task CargarAsync()
+    {
+        var filtro = new FiltroHistorial(
+            Estado: EstadoReservaExtensions.DesdeCodigo(estado),
+            Desde: ParsearFecha(desde),
+            Hasta: ParsearFecha(hasta),
+            SpaceId: Guid.TryParse(spaceId, out var id) ? id : null);
+
+        var resultado = await Historial.HandleAsync(new ConsultarHistorialCommand(filtro));
+        if (resultado.IsSuccess)
+        {
+            filas = resultado.Value ?? Array.Empty<HistorialReservaDto>();
+        }
+        else
+        {
+            mensajeError = resultado.ErrorCode;
+        }
+    }
+
+    private static DateTimeOffset? ParsearFecha(string valor) =>
+        DateTimeOffset.TryParse(valor, out var fecha) ? fecha : null;
+}

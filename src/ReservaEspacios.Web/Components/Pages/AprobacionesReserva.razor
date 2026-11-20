@@ -1,0 +1,125 @@
+@page "/reservas/aprobaciones"
+@rendermode InteractiveServer
+@using ReservaEspacios.Application.Autorizacion
+@using ReservaEspacios.Application.Common
+@using ReservaEspacios.Application.Reservas
+@using ReservaEspacios.Domain.Common
+@using ReservaEspacios.Domain.Reservas
+@inject ICommandHandler<ConsultarHistorialCommand, IReadOnlyList<HistorialReservaDto>> Historial
+@inject ICommandHandler<AprobarReservaCommand> Aprobar
+@inject ICommandHandler<RechazarReservaCommand> Rechazar
+@inject IEvaluadorPermisos Permisos
+@inject IUsuarioActual Actual
+
+<h1>Panel de aprobación</h1>
+
+@if (!Permisos.PuedeAprobar(Actual.Rol))
+{
+    <p data-testid="error">@DomainErrors.NoAutorizado</p>
+}
+else
+{
+    <table>
+        <thead>
+            <tr>
+                <th>Solicitante</th>
+                <th>Espacio</th>
+                <th>Inicio</th>
+                <th>Fin</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var reserva in pendientes)
+            {
+                <tr data-testid="fila">
+                    <td>@reserva.Solicitante</td>
+                    <td>@reserva.Espacio</td>
+                    <td>@reserva.Inicio</td>
+                    <td>@reserva.Fin</td>
+                    <td>
+                        <input id="@($"motivo-{reserva.Id}")"
+                               value="@Motivo(reserva.Id)"
+                               @onchange="@(e => motivos[reserva.Id] = e.Value?.ToString() ?? string.Empty)" />
+                        <button id="@($"aprobar-{reserva.Id}")"
+                                @onclick="@(() => AprobarAsync(reserva.Id))">Aprobar</button>
+                        <button id="@($"rechazar-{reserva.Id}")"
+                                @onclick="@(() => RechazarAsync(reserva.Id))">Rechazar</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@if (mensajeError is not null)
+{
+    <p data-testid="accion-error">@mensajeError</p>
+}
+
+@if (mensajeExito is not null)
+{
+    <p data-testid="accion-exito">@mensajeExito</p>
+}
+
+@code {
+    private readonly Dictionary<Guid, string> motivos = new();
+    private IReadOnlyList<HistorialReservaDto> pendientes = Array.Empty<HistorialReservaDto>();
+    private string? mensajeError;
+    private string? mensajeExito;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Permisos.PuedeAprobar(Actual.Rol))
+        {
+            await CargarAsync();
+        }
+    }
+
+    private string Motivo(Guid id) => motivos.TryGetValue(id, out var motivo) ? motivo : string.Empty;
+
+    private async Task CargarAsync()
+    {
+        var resultado = await Historial.HandleAsync(new ConsultarHistorialCommand(
+            new FiltroHistorial(Estado: EstadoReserva.Pendiente)));
+
+        if (resultado.IsSuccess)
+        {
+            pendientes = resultado.Value ?? Array.Empty<HistorialReservaDto>();
+        }
+        else
+        {
+            mensajeError = resultado.ErrorCode;
+        }
+    }
+
+    private async Task AprobarAsync(Guid reservaId)
+    {
+        mensajeError = null;
+        mensajeExito = null;
+        var resultado = await Aprobar.HandleAsync(new AprobarReservaCommand(reservaId));
+        await MostrarResultadoAsync(resultado, "Reserva aprobada.");
+    }
+
+    private async Task RechazarAsync(Guid reservaId)
+    {
+        mensajeError = null;
+        mensajeExito = null;
+        var resultado = await Rechazar.HandleAsync(
+            new RechazarReservaCommand(reservaId, Motivo(reservaId)));
+        await MostrarResultadoAsync(resultado, "Reserva rechazada.");
+    }
+
+    private async Task MostrarResultadoAsync(Result resultado, string mensaje)
+    {
+        if (resultado.IsSuccess)
+        {
+            mensajeExito = mensaje;
+            await CargarAsync();
+        }
+        else
+        {
+            mensajeError = resultado.ErrorCode;
+        }
+    }
+}
