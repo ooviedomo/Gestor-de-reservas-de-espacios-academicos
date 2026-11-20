@@ -1,0 +1,47 @@
+@using ReservaEspacios.Application.Autorizacion
+@using ReservaEspacios.Application.Common
+@using ReservaEspacios.Domain.Usuarios
+@inject IEvaluadorPermisos Permisos
+@inject IUsuarioActual Usuario
+
+<nav class="nav-menu" aria-label="Navegación principal">
+    <NavLink href="/" Match="NavLinkMatch.All">Inicio</NavLink>
+    <NavLink href="/disponibilidad">Disponibilidad</NavLink>
+
+    @if (Autenticado && Permisos.PuedeCrearReserva(Rol))
+    {
+        <NavLink href="/reservas/nueva">Solicitar reserva</NavLink>
+    }
+    @if (Autenticado && Permisos.PuedeVerHistorial(Rol))
+    {
+        <NavLink href="/reservas/historial">Historial de reservas</NavLink>
+    }
+    @if (Autenticado && Permisos.PuedeAprobar(Rol))
+    {
+        <NavLink href="/reservas/aprobaciones">Panel de aprobación</NavLink>
+    }
+    @if (Autenticado && Permisos.PuedeAdministrarEspacios(Rol))
+    {
+        <NavLink href="/administracion/espacios">Administrar espacios</NavLink>
+    }
+
+    <span class="nav-menu__espaciador"></span>
+
+    @if (Autenticado)
+    {
+        <span data-testid="rol-activo">@Rol.Etiqueta()</span>
+        <form method="post" action="/api/autenticacion/logout">
+            <button type="submit" data-testid="cerrar-sesion">Cerrar sesión</button>
+        </form>
+    }
+    else
+    {
+        <NavLink href="/acceso/login">Acceder</NavLink>
+        <NavLink href="/acceso/registro">Registro</NavLink>
+    }
+</nav>
+
+@code {
+    private bool Autenticado => Usuario.EstaAutenticado;
+    private Rol Rol => Usuario.Rol;
+}

@@ -1,7 +1,47 @@
 ﻿@page "/"
+@using ReservaEspacios.Application.Autorizacion
+@using ReservaEspacios.Application.Common
+@using ReservaEspacios.Domain.Usuarios
+@inject IEvaluadorPermisos Permisos
+@inject IUsuarioActual Usuario
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Inicio</PageTitle>
 
-<h1>Hello, world!</h1>
+<h1>Bienvenido a ReservaEspacios</h1>
 
-Welcome to your new app.
+<p>Consulta la disponibilidad de espacios y gestiona tus reservas desde un solo lugar.</p>
+
+<section aria-label="Accesos disponibles">
+    <ul>
+        <li><a href="/disponibilidad">Consultar disponibilidad</a></li>
+        @if (Autenticado && Permisos.PuedeCrearReserva(Rol))
+        {
+            <li><a href="/reservas/nueva">Solicitar reserva</a></li>
+        }
+        @if (Autenticado && Permisos.PuedeVerHistorial(Rol))
+        {
+            <li><a href="/reservas/historial">Ver historial de reservas</a></li>
+        }
+        @if (Autenticado && Permisos.PuedeAprobar(Rol))
+        {
+            <li><a href="/reservas/aprobaciones">Panel de aprobación</a></li>
+        }
+        @if (Autenticado && Permisos.PuedeAdministrarEspacios(Rol))
+        {
+            <li><a href="/administracion/espacios">Administrar espacios</a></li>
+        }
+    </ul>
+</section>
+
+@if (!Autenticado)
+{
+    <p>
+        <a href="/acceso/login">Acceder</a> o
+        <a href="/acceso/registro">registrarse como solicitante</a>.
+    </p>
+}
+
+@code {
+    private bool Autenticado => Usuario.EstaAutenticado;
+    private Rol Rol => Usuario.Rol;
+}

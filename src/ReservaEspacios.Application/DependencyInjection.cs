@@ -72,6 +72,13 @@ public static class DependencyInjection
         services.AddScoped<CambiarRolUsuario>();
         services.AddScoped<ActivarDesactivarUsuario>();
         services.AddScoped<AutenticarUsuario>();
+        // La UI inyecta la abstracción, como ya hace con los comandos de reservas.
+        services.AddScoped<
+            ICommandHandler<AutenticarUsuarioCommand, UsuarioSesionDto>,
+            AutenticarUsuario>();
+        services.AddScoped<
+            ICommandHandler<RegistrarSolicitanteCommand, Guid>,
+            RegistrarSolicitante>();
         return services;
     }
 }

@@ -1,0 +1,57 @@
+@page "/acceso/login"
+@rendermode InteractiveServer
+@using ReservaEspacios.Application.Common
+@using ReservaEspacios.Application.Usuarios
+@inject ICommandHandler<AutenticarUsuarioCommand, UsuarioSesionDto> Autenticar
+@inject NavigationManager Navegador
+
+<PageTitle>Acceder</PageTitle>
+
+<h1>Acceder</h1>
+
+<EditForm Model="formulario" OnValidSubmit="AccederAsync">
+    <div>
+        <label for="email">Email</label>
+        <InputText id="email" @bind-Value="formulario.Email" />
+    </div>
+    <div>
+        <label for="contrasena">Contraseña</label>
+        <InputText id="contrasena" type="password" @bind-Value="formulario.Contrasena" />
+    </div>
+    <button type="submit" id="acceder">Acceder</button>
+</EditForm>
+
+@if (mensajeError is not null)
+{
+    <p data-testid="error">@mensajeError</p>
+}
+
+<p>
+    ¿No tienes cuenta? <a href="/acceso/registro">Regístrate como solicitante</a>.
+</p>
+
+@code {
+    private sealed class Formulario
+    {
+        public string Email { get; set; } = string.Empty;
+        public string Contrasena { get; set; } = string.Empty;
+    }
+
+    private readonly Formulario formulario = new();
+    private string? mensajeError;
+
+    private async Task AccederAsync()
+    {
+        mensajeError = null;
+        var resultado = await Autenticar.HandleAsync(
+            new AutenticarUsuarioCommand(formulario.Email, formulario.Contrasena));
+
+        if (resultado.IsSuccess)
+        {
+            Navegador.NavigateTo("/", forceLoad: true);
+            return;
+        }
+
+        mensajeError = resultado.ErrorCode;
+    }
+}

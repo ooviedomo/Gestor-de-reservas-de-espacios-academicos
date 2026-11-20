@@ -5,6 +5,7 @@ using ReservaEspacios.Application.Reservas;
 using ReservaEspacios.Application.Usuarios;
 using ReservaEspacios.Domain.Common;
 using ReservaEspacios.Domain.Reservas;
+using ReservaEspacios.Web.Security;
 
 namespace ReservaEspacios.Web;
 
@@ -36,6 +37,12 @@ public static class ApiEndpoints
             return resultado.IsSuccess
                 ? Results.Ok(resultado.Value)
                 : Error(resultado.ErrorCode);
+        });
+
+        app.MapPost("/api/autenticacion/logout", async (ISesionWeb sesion) =>
+        {
+            await sesion.CerrarSesionAsync();
+            return Results.Ok(new { cerrada = true });
         });
 
         // Consulta de permisos para la UI: evalúa la misma Strategy que usan los guards.

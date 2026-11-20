@@ -1,0 +1,63 @@
+@page "/acceso/registro"
+@rendermode InteractiveServer
+@using ReservaEspacios.Application.Common
+@using ReservaEspacios.Application.Usuarios
+@inject ICommandHandler<RegistrarSolicitanteCommand, Guid> Registrar
+@inject NavigationManager Navegador
+
+<PageTitle>Registro de solicitante</PageTitle>
+
+<h1>Registro de solicitante</h1>
+
+<EditForm Model="formulario" OnValidSubmit="RegistrarAsync">
+    <div>
+        <label for="nombre">Nombre</label>
+        <InputText id="nombre" @bind-Value="formulario.Nombre" />
+    </div>
+    <div>
+        <label for="email">Email</label>
+        <InputText id="email" @bind-Value="formulario.Email" />
+    </div>
+    <div>
+        <label for="contrasena">Contraseña</label>
+        <InputText id="contrasena" type="password" @bind-Value="formulario.Contrasena" />
+    </div>
+    <button type="submit" id="registrar">Registrarse</button>
+</EditForm>
+
+@if (mensajeError is not null)
+{
+    <p data-testid="error">@mensajeError</p>
+}
+
+<p>
+    ¿Ya tienes cuenta? <a href="/acceso/login">Acceder</a>.
+</p>
+
+@code {
+    private sealed class Formulario
+    {
+        public string Nombre { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Contrasena { get; set; } = string.Empty;
+    }
+
+    private readonly Formulario formulario = new();
+    private string? mensajeError;
+
+    private async Task RegistrarAsync()
+    {
+        mensajeError = null;
+        var resultado = await Registrar.HandleAsync(
+            new RegistrarSolicitanteCommand(
+                formulario.Nombre, formulario.Email, formulario.Contrasena));
+
+        if (resultado.IsSuccess)
+        {
+            Navegador.NavigateTo("/acceso/login", forceLoad: true);
+            return;
+        }
+
+        mensajeError = resultado.ErrorCode;
+    }
+}

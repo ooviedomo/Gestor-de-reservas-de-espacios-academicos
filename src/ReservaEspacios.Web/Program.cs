@@ -42,6 +42,7 @@ builder.Services
     .AddDefaultTokenProviders();
 
 builder.Services.AddScoped<IUsuarioActual, IdentityRoleAdapter>();
+builder.Services.AddScoped<ISesionWeb, SesionWeb>();
 
 // COM-001: cierre diario de reservas APROBADA vencidas. El intervalo se configura con
 // Reservas__CierreAutomatico__IntervaloSegundos (por defecto, 24 h).
