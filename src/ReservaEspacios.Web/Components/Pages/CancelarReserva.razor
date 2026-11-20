@@ -1,0 +1,74 @@
+@page "/reservas/cancelar"
+@rendermode InteractiveServer
+@using ReservaEspacios.Application.Common
+@using ReservaEspacios.Application.Reservas
+@using ReservaEspacios.Domain.Common
+@inject ICommandHandler<CancelarReservaCommand> Cancelar
+
+<h1>Cancelar reserva</h1>
+
+<EditForm Model="formulario" OnValidSubmit="CancelarAsync">
+    <div>
+        <label for="reservaId">Identificador de la reserva</label>
+        <InputText id="reservaId" @bind-Value="formulario.ReservaId" />
+    </div>
+    <div>
+        <label for="motivo">Motivo</label>
+        <InputText id="motivo" @bind-Value="formulario.Motivo" />
+    </div>
+    <button type="submit" id="cancelar">Cancelar reserva</button>
+</EditForm>
+
+@if (mensajeError is not null)
+{
+    <p data-testid="error">@mensajeError</p>
+}
+
+@if (mensajeExito is not null)
+{
+    <p data-testid="exito">@mensajeExito</p>
+}
+
+@code {
+    private sealed class Formulario
+    {
+        public string ReservaId { get; set; } = string.Empty;
+        public string Motivo { get; set; } = string.Empty;
+    }
+
+    private readonly Formulario formulario = new();
+    private string? mensajeError;
+    private string? mensajeExito;
+
+    private async Task CancelarAsync()
+    {
+        mensajeError = null;
+        mensajeExito = null;
+
+        if (string.IsNullOrWhiteSpace(formulario.Motivo))
+        {
+            mensajeError = DomainErrors.MotivoObligatorio;
+            return;
+        }
+
+        if (!Guid.TryParse(formulario.ReservaId, out var reservaId))
+        {
+            mensajeError = DomainErrors.ReservaNoEncontrada;
+            return;
+        }
+
+        var resultado = await Cancelar.HandleAsync(
+            new CancelarReservaCommand(reservaId, formulario.Motivo));
+
+        if (resultado.IsSuccess)
+        {
+            mensajeExito = "Reserva cancelada correctamente.";
+        }
+        else
+        {
+            // Códigos estables de RES-003/AUTH-002: MOTIVO_OBLIGATORIO,
+            // NO_AUTORIZADO, TRANSICION_INVALIDA, RESERVA_NO_ENCONTRADA, ...
+            mensajeError = resultado.ErrorCode;
+        }
+    }
+}

@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using ReservaEspacios.Application.Autorizacion;
+using ReservaEspacios.Application.Common;
 using ReservaEspacios.Application.Disponibilidad;
 using ReservaEspacios.Application.Espacios;
 using ReservaEspacios.Application.Facade;
@@ -45,6 +46,10 @@ public static class DependencyInjection
         // Command pattern: un manejador por caso de uso de reservas y usuarios.
         services.AddScoped<CrearReserva>();
         services.AddScoped<CancelarReserva>();
+        // La UI depende de la abstracción del patrón Command (ADR-002), no del handler
+        // concreto; así los componentes se prueban con un mock del comando (tarea 3.5).
+        services.AddScoped<ICommandHandler<CrearReservaCommand, Guid>, CrearReserva>();
+        services.AddScoped<ICommandHandler<CancelarReservaCommand>, CancelarReserva>();
         services.AddScoped<RegistrarSolicitante>();
         services.AddScoped<CrearUsuarioPrivilegiado>();
         services.AddScoped<CambiarRolUsuario>();

@@ -18,7 +18,7 @@
 - [x] 3.2 Implementar `CrearReserva` con revalidación de disponibilidad dentro de una transacción `SERIALIZABLE`, y verificar `TC-RES-001-*` incluido el escenario de disponibilidad cambiada.
 - [x] 3.3 Implementar la prueba de concurrencia con dos peticiones simultáneas sobre la misma franja y verificar `TC-RES-002-*` (una aceptada, una rechazada).
 - [x] 3.4 Implementar `CancelarReserva` con motivo obligatorio y permisos por rol, y verificar `TC-RES-003-*`.
-- [ ] 3.5 Crear los componentes Razor de alta y cancelación y verificar con bUnit que muestran `RANGO_INVALIDO`, `CAPACIDAD_EXCEDIDA`, `MOTIVO_OBLIGATORIO` y `NO_AUTORIZADO`.
+- [x] 3.5 Crear los componentes Razor de alta y cancelación y verificar con bUnit que muestran `RANGO_INVALIDO`, `CAPACIDAD_EXCEDIDA`, `MOTIVO_OBLIGATORIO` y `NO_AUTORIZADO`.
 
 ## 4. Aprobación e historial
 

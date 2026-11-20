@@ -1,0 +1,120 @@
+@page "/reservas/nueva"
+@rendermode InteractiveServer
+@using ReservaEspacios.Application.Common
+@using ReservaEspacios.Application.Espacios
+@using ReservaEspacios.Application.Facade
+@using ReservaEspacios.Application.Reservas
+@using ReservaEspacios.Domain.Common
+@inject ICommandHandler<CrearReservaCommand, Guid> Crear
+@inject IReservaEspaciosFacade Facade
+
+<h1>Solicitar reserva</h1>
+
+<EditForm Model="formulario" OnValidSubmit="SolicitarAsync">
+    <div>
+        <label for="spaceId">Espacio</label>
+        <InputSelect id="spaceId" @bind-Value="formulario.SpaceId">
+            @foreach (var espacio in espacios)
+            {
+                <option value="@espacio.Id">@espacio.Nombre</option>
+            }
+        </InputSelect>
+    </div>
+    <div>
+        <label for="fecha">Fecha</label>
+        <InputText id="fecha" @bind-Value="formulario.Fecha" />
+    </div>
+    <div>
+        <label for="inicio">Inicio</label>
+        <InputText id="inicio" @bind-Value="formulario.Inicio" />
+    </div>
+    <div>
+        <label for="fin">Fin</label>
+        <InputText id="fin" @bind-Value="formulario.Fin" />
+    </div>
+    <div>
+        <label for="proposito">Propósito</label>
+        <InputText id="proposito" @bind-Value="formulario.Proposito" />
+    </div>
+    <div>
+        <label for="asistentes">Asistentes</label>
+        <InputNumber id="asistentes" @bind-Value="formulario.Asistentes" />
+    </div>
+    <button type="submit" id="solicitar">Solicitar</button>
+</EditForm>
+
+@if (mensajeError is not null)
+{
+    <p data-testid="error">@mensajeError</p>
+}
+
+@if (mensajeExito is not null)
+{
+    <p data-testid="exito">@mensajeExito</p>
+}
+
+@code {
+    private sealed class Formulario
+    {
+        public Guid SpaceId { get; set; }
+        public string Fecha { get; set; } = "2026-11-20";
+        public string Inicio { get; set; } = "10:00";
+        public string Fin { get; set; } = "11:00";
+        public string Proposito { get; set; } = "Clase de laboratorio";
+        public int Asistentes { get; set; } = 20;
+    }
+
+    private readonly Formulario formulario = new();
+    private IReadOnlyList<SpaceCatalogoDto> espacios = Array.Empty<SpaceCatalogoDto>();
+    private string? mensajeError;
+    private string? mensajeExito;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var catalogo = await Facade.ConsultarCatalogo(new FiltroCatalogoBuilder().Build());
+        espacios = catalogo.IsSuccess
+            ? catalogo.Value ?? Array.Empty<SpaceCatalogoDto>()
+            : Array.Empty<SpaceCatalogoDto>();
+        if (espacios.Count > 0)
+        {
+            formulario.SpaceId = espacios[0].Id;
+        }
+    }
+
+    private async Task SolicitarAsync()
+    {
+        mensajeError = null;
+        mensajeExito = null;
+
+        if (!DateOnly.TryParse(formulario.Fecha, out var fecha) ||
+            !TimeOnly.TryParse(formulario.Inicio, out var inicio) ||
+            !TimeOnly.TryParse(formulario.Fin, out var fin) ||
+            fin <= inicio)
+        {
+            mensajeError = DomainErrors.RangoInvalido;
+            return;
+        }
+
+        var zona = TimeZoneInfo.FindSystemTimeZoneById("America/Bogota");
+        var inicioLocal = DateTime.SpecifyKind(fecha.ToDateTime(inicio), DateTimeKind.Unspecified);
+        var finLocal = DateTime.SpecifyKind(fecha.ToDateTime(fin), DateTimeKind.Unspecified);
+
+        var resultado = await Crear.HandleAsync(new CrearReservaCommand(
+            formulario.SpaceId,
+            new DateTimeOffset(inicioLocal, zona.GetUtcOffset(inicioLocal)),
+            new DateTimeOffset(finLocal, zona.GetUtcOffset(finLocal)),
+            formulario.Proposito,
+            formulario.Asistentes));
+
+        if (resultado.IsSuccess)
+        {
+            mensajeExito = "Reserva solicitada correctamente.";
+        }
+        else
+        {
+            // Códigos estables de RES-001/AUTH-001: RANGO_INVALIDO,
+            // CAPACIDAD_EXCEDIDA, NO_AUTORIZADO, SOLAPE_DETECTADO, ...
+            mensajeError = resultado.ErrorCode;
+        }
+    }
+}
