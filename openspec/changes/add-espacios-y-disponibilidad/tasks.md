@@ -16,8 +16,8 @@
 
 ## 3. Disponibilidad
 
-- [ ] 3.1 Definir `IDisponibilidadRepository` con un stub de reservas bloqueantes hasta que exista la tabla `reservations`, y verificar su prueba unitaria de aislamiento.
-- [ ] 3.2 Implementar `ConsultarDisponibilidad` con las reglas DISP-001 y DISP-002 (estados `PENDIENTE`/`APROBADA`, intervalos `[inicio, fin)`, motivos de no disponibilidad y conversión `America/Bogota`→UTC con franjas límite en la hora de cierre), y verificar `TC-DISP-001-*` y `TC-DISP-002-*`.
+- [x] 3.1 Definir `IDisponibilidadRepository` con un stub de reservas bloqueantes hasta que exista la tabla `reservations`, y verificar su prueba unitaria de aislamiento.
+- [x] 3.2 Implementar `ConsultarDisponibilidad` con las reglas DISP-001 y DISP-002 (estados `PENDIENTE`/`APROBADA`, intervalos `[inicio, fin)`, motivos de no disponibilidad y conversión `America/Bogota`→UTC con franjas límite en la hora de cierre), y verificar `TC-DISP-001-*` y `TC-DISP-002-*`.
 - [ ] 3.3 Exponer la consulta de disponibilidad y crear el componente Razor correspondiente, y verificar con `WebApplicationFactory` los resultados `DISPONIBLE`, `ESPACIO_INACTIVO`, `FUERA_DE_HORARIO` y `SOLAPE_CON_RESERVA`.
 
 ## 4. Integración y cierre del change

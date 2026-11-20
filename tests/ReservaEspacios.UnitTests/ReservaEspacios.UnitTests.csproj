@@ -23,6 +23,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\ReservaEspacios.Domain\ReservaEspacios.Domain.csproj" />
     <ProjectReference Include="..\..\src\ReservaEspacios.Application\ReservaEspacios.Application.csproj" />
+    <ProjectReference Include="..\..\src\ReservaEspacios.Infrastructure\ReservaEspacios.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

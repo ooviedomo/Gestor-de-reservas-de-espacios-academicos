@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using ReservaEspacios.Application.Common;
+using ReservaEspacios.Application.Disponibilidad;
 using ReservaEspacios.Application.Espacios;
+using ReservaEspacios.Infrastructure.Disponibilidad;
 using ReservaEspacios.Infrastructure.Espacios;
 using ReservaEspacios.Infrastructure.Persistence;
 
@@ -17,6 +19,7 @@ public static class DependencyInjection
             options.UseNpgsql(connectionString));
         services.AddScoped<ISpaceRepository, SpaceRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<IDisponibilidadRepository, StubDisponibilidadRepository>();
 
         return services;
     }
