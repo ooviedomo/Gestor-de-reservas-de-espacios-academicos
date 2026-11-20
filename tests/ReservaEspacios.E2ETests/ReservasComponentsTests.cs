@@ -57,6 +57,22 @@ public sealed class ReservasComponentsTests
             It.IsAny<CrearReservaCommand>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
+    [Fact]
+    public void TC_UI_005_Formulario_alta_anuncia_el_formato_HH_mm()
+    {
+        using var ctx = new BunitContext();
+        var crear = new Mock<ICommandHandler<CrearReservaCommand, Guid>>();
+        RegistrarServiciosDeAlta(ctx, crear.Object);
+
+        var cut = ctx.Render<SolicitarReserva>();
+
+        cut.Find("#inicio").GetAttribute("type").Should().Be("time");
+        cut.Find("#inicio").GetAttribute("title").Should().Be("HH:mm");
+        cut.Find("#fin").GetAttribute("type").Should().Be("time");
+        cut.Find("#fin").GetAttribute("title").Should().Be("HH:mm");
+        cut.Find("#fecha").GetAttribute("title").Should().Be("dd/MM/yyyy");
+    }
+
     [Theory]
     [InlineData("MOTIVO_OBLIGATORIO")]
     [InlineData("NO_AUTORIZADO")]

@@ -19,15 +19,18 @@
     </div>
     <div>
         <label for="fecha">Fecha</label>
-        <InputText id="fecha" @bind-Value="formulario.Fecha" />
+        <InputText id="fecha" title="dd/MM/yyyy" @bind-Value="formulario.Fecha" />
+        <small>Formato dd/MM/yyyy</small>
     </div>
     <div>
         <label for="inicio">Inicio</label>
-        <InputText id="inicio" @bind-Value="formulario.Inicio" />
+        <InputText id="inicio" type="time" title="HH:mm" @bind-Value="formulario.Inicio" />
+        <small>Formato HH:mm</small>
     </div>
     <div>
         <label for="fin">Fin</label>
-        <InputText id="fin" @bind-Value="formulario.Fin" />
+        <InputText id="fin" type="time" title="HH:mm" @bind-Value="formulario.Fin" />
+        <small>Formato HH:mm</small>
     </div>
     <button type="submit" id="consultar">Consultar</button>
 </EditForm>

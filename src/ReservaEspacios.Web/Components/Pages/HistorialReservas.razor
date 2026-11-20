@@ -6,6 +6,7 @@
 @using ReservaEspacios.Domain.Common
 @using ReservaEspacios.Domain.Reservas
 @inject ICommandHandler<ConsultarHistorialCommand, IReadOnlyList<HistorialReservaDto>> Historial
+@inject ICommandHandler<CancelarReservaCommand> Cancelar
 @inject IEvaluadorPermisos Permisos
 @inject IUsuarioActual Actual
 
@@ -48,6 +49,7 @@ else
             <tr>
                 <th>Estado</th>
                 <th>Espacio</th>
+                <th>Fecha</th>
                 <th>Inicio</th>
                 <th>Fin</th>
                 <th>Solicitante</th>
@@ -59,6 +61,7 @@ else
                 <th>Cancelado en</th>
                 <th>Completado en</th>
                 <th>Creado en</th>
+                <th>Acción</th>
             </tr>
         </thead>
         <tbody>
@@ -67,17 +70,29 @@ else
                 <tr data-testid="fila">
                     <td data-testid="estado-fila">@reserva.Estado</td>
                     <td>@reserva.Espacio</td>
-                    <td>@reserva.Inicio</td>
-                    <td>@reserva.Fin</td>
+                    <td data-testid="fecha-fila">@FormatoFechaHora.Fecha(reserva.Inicio)</td>
+                    <td data-testid="hora-inicio">@FormatoFechaHora.Hora(reserva.Inicio)</td>
+                    <td data-testid="hora-fin">@FormatoFechaHora.Hora(reserva.Fin)</td>
                     <td>@reserva.Solicitante</td>
                     <td data-testid="actor">@(reserva.Actor ?? "—")</td>
                     <td data-testid="rol-actor">@(reserva.RolActor ?? "—")</td>
                     <td data-testid="motivo-rechazo">@(reserva.MotivoRechazo ?? "—")</td>
                     <td data-testid="motivo-cancelacion">@(reserva.MotivoCancelacion ?? "—")</td>
-                    <td>@(reserva.AprobadoEn?.ToString() ?? "—")</td>
-                    <td>@(reserva.CanceladoEn?.ToString() ?? "—")</td>
-                    <td>@(reserva.CompletadoEn?.ToString() ?? "—")</td>
-                    <td>@reserva.CreadoEn</td>
+                    <td>@FormatoFechaHora.FechaHora(reserva.AprobadoEn)</td>
+                    <td>@FormatoFechaHora.FechaHora(reserva.CanceladoEn)</td>
+                    <td>@FormatoFechaHora.FechaHora(reserva.CompletadoEn)</td>
+                    <td>@FormatoFechaHora.FechaHora(reserva.CreadoEn)</td>
+                    <td>
+                        @if (PuedeCancelar(reserva))
+                        {
+                            <input id="@($"motivo-cancelacion-{reserva.Id}")"
+                                   value="@Motivo(reserva.Id)"
+                                   @onchange="@(e => motivos[reserva.Id] = e.Value?.ToString() ?? string.Empty)"
+                                   aria-label="Motivo de cancelación" />
+                            <button id="@($"cancelar-{reserva.Id}")" data-testid="cancelar-fila"
+                                    @onclick="@(() => CancelarAsync(reserva.Id))">Cancelar</button>
+                        }
+                    </td>
                 </tr>
             }
         </tbody>
@@ -86,6 +101,16 @@ else
     @if (mensajeError is not null)
     {
         <p data-testid="error-consulta">@mensajeError</p>
+    }
+
+    @if (mensajeCancelacionError is not null)
+    {
+        <p data-testid="error-cancelacion">@mensajeCancelacionError</p>
+    }
+
+    @if (mensajeCancelacionExito is not null)
+    {
+        <p data-testid="exito-cancelacion">@mensajeCancelacionExito</p>
     }
 }
 
@@ -97,8 +122,11 @@ else
     private string desde = string.Empty;
     private string hasta = string.Empty;
     private string spaceId = string.Empty;
+    private readonly Dictionary<Guid, string> motivos = new();
     private IReadOnlyList<HistorialReservaDto> filas = Array.Empty<HistorialReservaDto>();
     private string? mensajeError;
+    private string? mensajeCancelacionError;
+    private string? mensajeCancelacionExito;
 
     protected override async Task OnInitializedAsync()
     {
@@ -132,6 +160,40 @@ else
         {
             mensajeError = resultado.ErrorCode;
         }
+    }
+
+    private string Motivo(Guid id) => motivos.TryGetValue(id, out var motivo) ? motivo : string.Empty;
+
+    private bool PuedeCancelar(HistorialReservaDto reserva)
+    {
+        var estado = EstadoReservaExtensions.DesdeCodigo(reserva.Estado);
+        return estado is EstadoReserva.Pendiente or EstadoReserva.Aprobada &&
+            Permisos.PuedeCancelarReserva(
+                Actual.Rol, reserva.SolicitanteId, Actual.UsuarioId ?? Guid.Empty);
+    }
+
+    private async Task CancelarAsync(Guid reservaId)
+    {
+        mensajeCancelacionError = null;
+        mensajeCancelacionExito = null;
+
+        var motivo = Motivo(reservaId);
+        if (string.IsNullOrWhiteSpace(motivo))
+        {
+            mensajeCancelacionError = DomainErrors.MotivoObligatorio;
+            return;
+        }
+
+        var resultado = await Cancelar.HandleAsync(new CancelarReservaCommand(reservaId, motivo));
+        if (!resultado.IsSuccess)
+        {
+            mensajeCancelacionError = resultado.ErrorCode;
+            return;
+        }
+
+        motivos.Remove(reservaId);
+        mensajeCancelacionExito = "Reserva cancelada correctamente.";
+        await CargarAsync();
     }
 
     private static DateTimeOffset? ParsearFecha(string valor) =>

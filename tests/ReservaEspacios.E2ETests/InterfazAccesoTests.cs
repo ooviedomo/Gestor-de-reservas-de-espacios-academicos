@@ -100,6 +100,17 @@ public sealed class InterfazAccesoTests
     }
 
     [Fact]
+    public void TC_UI_004_Menu_cierra_sesion_hacia_la_portada()
+    {
+        using var ctx = CrearContexto(Rol.Solicitante);
+
+        var formulario = ctx.Render<NavMenu>().Find("form");
+
+        formulario.GetAttribute("method").Should().Be("post");
+        formulario.GetAttribute("action").Should().Be("/acceso/cerrar-sesion");
+    }
+
+    [Fact]
     public void TC_UI_002_Login_es_un_formulario_http_normal()
     {
         using var ctx = new BunitContext();

@@ -125,6 +125,24 @@ public sealed class AprobacionesHistorialComponentTests
     }
 
     [Fact]
+    public void TC_UI_005_Vistas_muestran_hora_HH_mm_y_fecha_separada()
+    {
+        var fila = Fila(Guid.NewGuid(), "PENDIENTE");
+        using var ctx = Contexto(Rol.Coordinador, HistorialCon(fila).Object);
+
+        var historial = ctx.Render<HistorialReservas>();
+        var aprobaciones = ctx.Render<AprobacionesReserva>();
+
+        historial.Find("[data-testid='hora-inicio']").TextContent.Trim().Should().Be("10:00");
+        historial.Find("[data-testid='hora-fin']").TextContent.Trim().Should().Be("11:00");
+        historial.Find("[data-testid='fecha-fila']").TextContent.Trim().Should().Be("20/11/2026");
+
+        aprobaciones.Find("[data-testid='hora-inicio']").TextContent.Trim().Should().Be("10:00");
+        aprobaciones.Find("[data-testid='hora-fin']").TextContent.Trim().Should().Be("11:00");
+        aprobaciones.Find("[data-testid='fecha-fila']").TextContent.Trim().Should().Be("20/11/2026");
+    }
+
+    [Fact]
     public void TC_RES_004_Vista_envia_los_filtros_al_consultar()
     {
         var espacioId = Guid.NewGuid();
@@ -147,19 +165,101 @@ public sealed class AprobacionesHistorialComponentTests
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
+    [Fact]
+    public void TC_UI_006_Solicitante_ve_cancelar_solo_en_reserva_propia_cancelable()
+    {
+        var usuarioId = Guid.NewGuid();
+        var propia = Guid.NewGuid();
+        var ajena = Guid.NewGuid();
+        var rechazada = Guid.NewGuid();
+        var filas = new[]
+        {
+            Fila(propia, "APROBADA", solicitanteId: usuarioId),
+            Fila(ajena, "APROBADA", solicitanteId: Guid.NewGuid()),
+            Fila(rechazada, "RECHAZADA", solicitanteId: usuarioId)
+        };
+        using var ctx = Contexto(Rol.Solicitante, HistorialCon(filas).Object, usuarioId: usuarioId);
+
+        var cut = ctx.Render<HistorialReservas>();
+
+        cut.FindAll("[data-testid='cancelar-fila']").Should().ContainSingle();
+        cut.FindAll($"[id='cancelar-{propia}']").Should().ContainSingle();
+        cut.FindAll($"[id='cancelar-{ajena}']").Should().BeEmpty();
+        cut.FindAll($"[id='cancelar-{rechazada}']").Should().BeEmpty();
+    }
+
+    [Fact]
+    public void TC_UI_006_Solicitante_cancela_con_motivo_y_recarga_el_historial()
+    {
+        var usuarioId = Guid.NewGuid();
+        var reservaId = Guid.NewGuid();
+        var historial = new Mock<ICommandHandler<
+            ConsultarHistorialCommand, IReadOnlyList<HistorialReservaDto>>>();
+        historial.SetupSequence(x => x.HandleAsync(
+                It.IsAny<ConsultarHistorialCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result<IReadOnlyList<HistorialReservaDto>>.Success(
+                [Fila(reservaId, "APROBADA", solicitanteId: usuarioId)]))
+            .ReturnsAsync(Result<IReadOnlyList<HistorialReservaDto>>.Success(
+                [Fila(reservaId, "CANCELADA", solicitanteId: usuarioId)]));
+        var cancelar = new Mock<ICommandHandler<CancelarReservaCommand>>();
+        cancelar.Setup(x => x.HandleAsync(
+                It.IsAny<CancelarReservaCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success());
+        using var ctx = Contexto(
+            Rol.Solicitante, historial.Object, cancelar: cancelar.Object, usuarioId: usuarioId);
+
+        var cut = ctx.Render<HistorialReservas>();
+        cut.Find($"#motivo-cancelacion-{reservaId}").Change("Docencia reprogramada");
+        cut.Find($"#cancelar-{reservaId}").Click();
+
+        cancelar.Verify(x => x.HandleAsync(
+            It.Is<CancelarReservaCommand>(c =>
+                c.ReservaId == reservaId && c.Motivo == "Docencia reprogramada"),
+            It.IsAny<CancellationToken>()), Times.Once);
+        cut.WaitForAssertion(() => cut.Find("[data-testid='exito-cancelacion']")
+            .TextContent.Trim().Should().Be("Reserva cancelada correctamente."));
+        cut.FindAll("[data-testid='cancelar-fila']").Should().BeEmpty();
+        historial.Verify(x => x.HandleAsync(
+            It.IsAny<ConsultarHistorialCommand>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
+    }
+
+    [Fact]
+    public void TC_UI_006_Motivo_obligatorio_no_envia_el_comando()
+    {
+        var usuarioId = Guid.NewGuid();
+        var reservaId = Guid.NewGuid();
+        var cancelar = new Mock<ICommandHandler<CancelarReservaCommand>>();
+        using var ctx = Contexto(
+            Rol.Solicitante,
+            HistorialCon(Fila(reservaId, "PENDIENTE", solicitanteId: usuarioId)).Object,
+            cancelar: cancelar.Object,
+            usuarioId: usuarioId);
+
+        var cut = ctx.Render<HistorialReservas>();
+        cut.Find($"#cancelar-{reservaId}").Click();
+
+        cut.Find("[data-testid='error-cancelacion']").TextContent.Trim()
+            .Should().Be(DomainErrors.MotivoObligatorio);
+        cancelar.Verify(x => x.HandleAsync(
+            It.IsAny<CancelarReservaCommand>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
     private static BunitContext Contexto(
         Rol rol,
         ICommandHandler<ConsultarHistorialCommand, IReadOnlyList<HistorialReservaDto>> historial,
         ICommandHandler<AprobarReservaCommand>? aprobar = null,
-        ICommandHandler<RechazarReservaCommand>? rechazar = null)
+        ICommandHandler<RechazarReservaCommand>? rechazar = null,
+        ICommandHandler<CancelarReservaCommand>? cancelar = null,
+        Guid? usuarioId = null)
     {
         var ctx = new BunitContext();
         ctx.Services.AddSingleton(historial);
         ctx.Services.AddSingleton(aprobar ?? new Mock<ICommandHandler<AprobarReservaCommand>>().Object);
         ctx.Services.AddSingleton(rechazar ?? new Mock<ICommandHandler<RechazarReservaCommand>>().Object);
+        ctx.Services.AddSingleton(cancelar ?? new Mock<ICommandHandler<CancelarReservaCommand>>().Object);
         ctx.Services.AddSingleton<IEvaluadorPermisos>(new EvaluadorPermisos());
         ctx.Services.AddSingleton<IUsuarioActual>(
-            new UsuarioAutenticado(rol, Guid.NewGuid()));
+            new UsuarioAutenticado(rol, usuarioId ?? Guid.NewGuid()));
         return ctx;
     }
 
@@ -177,8 +277,10 @@ public sealed class AprobacionesHistorialComponentTests
     private static HistorialReservaDto Fila(
         Guid id,
         string estado,
-        Guid? actorId = null) => new(
-            id, Guid.NewGuid(), "Laboratorio A-101", Inicio, Inicio.AddHours(1), estado,
+        Guid? actorId = null,
+        Guid? solicitanteId = null) => new(
+            id, solicitanteId ?? Guid.NewGuid(), Guid.NewGuid(), "Laboratorio A-101",
+            Inicio, Inicio.AddHours(1), estado,
             "Ana Pérez", actorId,
             actorId is null ? null : "Laura Gómez",
             actorId is null ? null : "Coordinador de espacios",

@@ -43,6 +43,25 @@ public sealed class ConsultarDisponibilidadPageTests
     }
 
     [Fact]
+    public void TC_UI_005_Formulario_disponibilidad_anuncia_el_formato_HH_mm()
+    {
+        using var ctx = new BunitContext();
+        var facade = new Mock<IReservaEspaciosFacade>();
+        facade.Setup(x => x.ConsultarCatalogo(
+                It.IsAny<FiltroCatalogo>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result<IReadOnlyList<SpaceCatalogoDto>>.Success([]));
+        ctx.Services.AddSingleton(facade.Object);
+
+        var cut = ctx.Render<ConsultarDisponibilidadPage>();
+
+        cut.Find("#inicio").GetAttribute("type").Should().Be("time");
+        cut.Find("#inicio").GetAttribute("title").Should().Be("HH:mm");
+        cut.Find("#fin").GetAttribute("type").Should().Be("time");
+        cut.Find("#fin").GetAttribute("title").Should().Be("HH:mm");
+        cut.Find("#fecha").GetAttribute("title").Should().Be("dd/MM/yyyy");
+    }
+
+    [Fact]
     public void TC_DISP_001_Componente_muestra_mensaje_si_el_catalogo_falla()
     {
         using var ctx = new BunitContext();

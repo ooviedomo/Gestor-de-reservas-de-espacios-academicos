@@ -38,7 +38,7 @@
     @if (Autenticado)
     {
         <span data-testid="rol-activo">@Rol.Etiqueta()</span>
-        <form method="post" action="/api/autenticacion/logout">
+        <form method="post" action="/acceso/cerrar-sesion">
             <button type="submit" data-testid="cerrar-sesion">Cerrar sesión</button>
         </form>
     }

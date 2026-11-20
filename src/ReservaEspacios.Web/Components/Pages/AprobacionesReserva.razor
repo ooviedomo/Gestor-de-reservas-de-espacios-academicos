@@ -24,6 +24,7 @@ else
             <tr>
                 <th>Solicitante</th>
                 <th>Espacio</th>
+                <th>Fecha</th>
                 <th>Inicio</th>
                 <th>Fin</th>
                 <th>Acciones</th>
@@ -35,8 +36,9 @@ else
                 <tr data-testid="fila">
                     <td>@reserva.Solicitante</td>
                     <td>@reserva.Espacio</td>
-                    <td>@reserva.Inicio</td>
-                    <td>@reserva.Fin</td>
+                    <td data-testid="fecha-fila">@FormatoFechaHora.Fecha(reserva.Inicio)</td>
+                    <td data-testid="hora-inicio">@FormatoFechaHora.Hora(reserva.Inicio)</td>
+                    <td data-testid="hora-fin">@FormatoFechaHora.Hora(reserva.Fin)</td>
                     <td>
                         <input id="@($"motivo-{reserva.Id}")"
                                value="@Motivo(reserva.Id)"

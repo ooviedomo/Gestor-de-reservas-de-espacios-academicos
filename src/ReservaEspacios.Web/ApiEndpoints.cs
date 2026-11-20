@@ -65,6 +65,15 @@ public static class ApiEndpoints
             return Results.Ok(new { cerrada = true });
         });
 
+        // UI-004: el menú envía un formulario normal. La cookie se elimina en esta
+        // petición HTTP y la respuesta devuelve al navegador a la portada. El endpoint
+        // JSON anterior se conserva para clientes que no son la UI.
+        app.MapPost("/acceso/cerrar-sesion", async (ISesionWeb sesion) =>
+        {
+            await sesion.CerrarSesionAsync();
+            return Results.Redirect("/");
+        });
+
         // Consulta de permisos para la UI: evalúa la misma Strategy que usan los guards.
         app.MapGet("/api/autorizacion/permisos", (
             IEvaluadorPermisos permisos,

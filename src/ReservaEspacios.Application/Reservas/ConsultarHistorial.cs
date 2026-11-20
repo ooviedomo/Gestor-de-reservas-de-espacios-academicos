@@ -19,6 +19,7 @@ public sealed record FiltroHistorial(
 /// <summary>RES-004: fila del historial con estados, fechas, motivos y actores legibles.</summary>
 public sealed record HistorialReservaDto(
     Guid Id,
+    Guid SolicitanteId,
     Guid EspacioId,
     string Espacio,
     DateTimeOffset Inicio,
@@ -91,6 +92,7 @@ public sealed class ConsultarHistorial(
 
         var historial = reservas.Select(reserva => new HistorialReservaDto(
             reserva.Id,
+            reserva.UsuarioId,
             reserva.SpaceId,
             espacios.GetValueOrDefault(reserva.SpaceId, "Espacio desconocido"),
             reserva.Inicio,

@@ -70,6 +70,28 @@ public sealed class FlujoAccesoWebTests(PostgresFixture fixture) : IClassFixture
     }
 
     [Fact]
+    public async Task TC_UI_004_Logout_formulario_redirige_a_la_portada_y_elimina_la_cookie()
+    {
+        using var factory = CrearFactory();
+        using var client = CrearCliente(factory);
+        var (_, email, contrasena) = await RegistrarSolicitanteAsync(client);
+
+        var acceso = await client.PostAsync("/acceso/autenticar", Formulario(email, contrasena));
+        acceso.StatusCode.Should().Be(HttpStatusCode.Found);
+        acceso.Headers.Should().Contain(x => x.Key.Equals("Set-Cookie", StringComparison.OrdinalIgnoreCase));
+
+        var salida = await client.PostAsync("/acceso/cerrar-sesion", null);
+
+        salida.StatusCode.Should().Be(HttpStatusCode.Found);
+        salida.Headers.Location!.ToString().Should().Be("/");
+        salida.Headers.Should().Contain(x => x.Key.Equals("Set-Cookie", StringComparison.OrdinalIgnoreCase));
+
+        var portada = await client.GetStringAsync("/");
+        portada.Should().Contain("/acceso/login");
+        portada.Should().NotContain("Cerrar sesión");
+    }
+
+    [Fact]
     public async Task TC_UI_002_Login_formulario_credenciales_invalidas_no_emite_cookie()
     {
         using var factory = CrearFactory();

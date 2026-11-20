@@ -1,7 +1,7 @@
 # Registro de uso de IA
 
 - **Proyecto:** `ReservaEspacios`
-- **Alcance:** fases 2 y 3 (revisión de especificaciones, implementación asistida y cierre del change `add-reservas-y-aprobaciones`), changes `add-interfaz-de-acceso-y-navegacion`, `add-notificaciones-auditoria-y-reportes` y `fix-login-cookie-interactive-server`
+- **Alcance:** fases 2 y 3 (revisión de especificaciones, implementación asistida y cierre del change `add-reservas-y-aprobaciones`), changes `add-interfaz-de-acceso-y-navegacion`, `add-notificaciones-auditoria-y-reportes`, `fix-login-cookie-interactive-server` y `fix-salida-y-historial-reservas`
 - **Base:** `PLAN_INGENIERIA.md` §6.3–6.5. Este documento **no modifica** el plan; las decisiones nuevas están en `docs/adr/` y en el `design.md` del change.
 - **Estado:** aprobación del estudiante **PENDIENTE** (ver §4).
 
@@ -35,6 +35,9 @@ Los prompts siguientes son **representativos**: parafrasean las instrucciones re
 | P-22 | UI / cierre | «Añade las vistas de auditoría y reporte, verifica el menú por roles y genera la matriz de trazabilidad del change» | `Auditoria.razor`, `ReporteOcupacion.razor`, `AuditoriaYReportesUITests.cs`, `docs/TRAZABILIDAD-NOTIFICACIONES-AUDITORIA-REPORTES.md` | 48 pruebas bUnit; 54 nombres de prueba verificados; cobertura 95.1% |
 | P-23 | Login / diagnóstico | «Investiga el InvalidOperationException "Headers are read-only" al acceder desde la UI y propón un change sin reabrir los archivados» | `openspec/changes/fix-login-cookie-interactive-server/` con `UI-002` modificada y `design.md` | `openspec validate fix-login-cookie-interactive-server --strict`: válido; causa localizada en el evento `InteractiveServer` |
 | P-24 | Login / implementación | «Sustituye el EditForm por un formulario HTTP normal, reutiliza USR-003 y añade regresión con Set-Cookie y errores por query» | `Login.razor`, `POST /acceso/autenticar` en `ApiEndpoints.cs`, pruebas bUnit y HTTP en `FlujoAccesoWebTests.cs` | 15 pruebas bUnit y 4 pruebas HTTP del flujo de acceso superadas |
+| P-25 | Salida y formato / spec | «Haz que Salir vuelva al inicio, muestra la hora en HH:mm también en los formularios y pon un botón para que el solicitante cancele desde cada fila del historial» | `openspec/changes/fix-salida-y-historial-reservas/` con `UI-004` modificada y `UI-005`/`UI-006` añadidas, `design.md` y `tasks.md` | `openspec validate fix-salida-y-historial-reservas --strict`: válido |
+| P-26 | Salida y formato / Web | «Añade un endpoint de formulario para cerrar sesión y redirigir, y un formateador único en America/Bogota para tablas y formularios» | `POST /acceso/cerrar-sesion`, `NavMenu.razor`, `FormatoFechaHora`, columnas `Fecha`, campos `type="time"` con ayuda `HH:mm` | 9 pruebas bUnit/unitarias de `UI-005` y `UI-004`; 5 pruebas HTTP del flujo de acceso, incluida la redirección `302` a `/` |
+| P-27 | Historial / cancelación | «Reutiliza CancelarReservaCommand para cancelar desde el historial, mostrando el botón solo en reservas propias cancelables» | `SolicitanteId` en `HistorialReservaDto`, columna de acción con motivo por fila en `HistorialReservas.razor` | 3 pruebas bUnit de visibilidad, motivo obligatorio, envío y recarga; 58 pruebas bUnit del proyecto en verde |
 
 ## 2. Salidas rechazadas o corregidas durante la revisión
 
@@ -65,9 +68,9 @@ Los prompts siguientes son **representativos**: parafrasean las instrucciones re
 - **Revisión humana del diff** antes de cada commit (`5455661`, `2cf104b`, `35346fb`, `725c2ce`, `9be23f4`, `0a6f902`, `a45b2b3`, los del change de interfaz y los del change actual).
 - `dotnet build`: 0 advertencias, 0 errores.
 - `dotnet format --verify-no-changes --no-restore`: sin cambios.
-- `dotnet test`: **357** pruebas superadas (211 unitarias, 49 bUnit, 97 integración).
-- Cobertura de líneas consolidada (coverlet + ReportGenerator): **95.1%** (5143/5406); ramas 78.7% (706/896), por encima del umbral del 80% de la tarea 5.1.
-- `openspec validate add-reservas-y-aprobaciones --strict`, `openspec validate add-interfaz-de-acceso-y-navegacion --strict`, `openspec validate add-notificaciones-auditoria-y-reportes --strict` y `openspec validate fix-login-cookie-interactive-server --strict`: válidos.
+- `dotnet test`: **367** pruebas superadas (211 unitarias, 58 bUnit, 98 integración).
+- Cobertura de líneas consolidada (coverlet): **95.1%** (5196/5462); ramas 79.1% (723/914), por encima del umbral del 80% de la tarea 5.1.
+- `openspec validate add-reservas-y-aprobaciones --strict`, `openspec validate add-interfaz-de-acceso-y-navegacion --strict`, `openspec validate add-notificaciones-auditoria-y-reportes --strict`, `openspec validate fix-login-cookie-interactive-server --strict` y `openspec validate fix-salida-y-historial-reservas --strict`: válidos.
 - Migraciones de EF Core revisadas: `btree_gist`, `EXCLUDE ... WHERE estado IN ('PENDIENTE','APROBADA')`, columnas `asistentes`, `motivo_rechazo`, `completado_en`, `ultimo_error`, índices de auditoría y trigger `audit_logs_inmutable`.
 - Dependencias: sin paquetes añadidos a la stack del plan §3.2.
 - Trazabilidad requisito → prueba: `docs/TRAZABILIDAD-ESPACIOS-DISPONIBILIDAD.md`, `docs/TRAZABILIDAD-RESERVAS-APROBACIONES.md`, `docs/TRAZABILIDAD-INTERFAZ-ACCESO.md` y `docs/TRAZABILIDAD-NOTIFICACIONES-AUDITORIA-REPORTES.md`.
@@ -91,6 +94,9 @@ De acuerdo con `PLAN_INGENIERIA.md` §6.5, la aprobación de especificaciones, r
 - [ ] He revisado el diff del change `fix-login-cookie-interactive-server`.
 - [ ] Acepto que la cookie se emita en una petición HTTP de formulario y que los errores viajen por query.
 - [ ] Autorizo archivar `fix-login-cookie-interactive-server`.
+- [ ] He revisado el diff del change `fix-salida-y-historial-reservas`.
+- [ ] Acepto que «Cerrar sesión» redirija a la portada, que la hora se muestre en `HH:mm` y que la cancelación reutilice el comando existente.
+- [ ] Autorizo archivar `fix-salida-y-historial-reservas`.
 
 **Nombre del estudiante:** ______________________________________
 
