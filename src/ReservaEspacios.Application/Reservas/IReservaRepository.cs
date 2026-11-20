@@ -2,8 +2,13 @@ using ReservaEspacios.Domain.Reservas;
 
 namespace ReservaEspacios.Application.Reservas;
 
-/// <summary>Escritura de reservas. La traducción de errores se aplica como Decorator.</summary>
+/// <summary>
+/// Persistencia de reservas. La traducción de errores y la invalidación de la caché
+/// de disponibilidad se aplican como Decorators sobre todas las mutaciones.
+/// </summary>
 public interface IReservaRepository
 {
+    Task<Reservation?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task AddAsync(Reservation reserva, CancellationToken cancellationToken = default);
+    Task UpdateAsync(Reservation reserva, CancellationToken cancellationToken = default);
 }

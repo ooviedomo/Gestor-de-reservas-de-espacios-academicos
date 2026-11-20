@@ -15,6 +15,10 @@ public sealed class GuardiaOperacionesProtegidas(
 {
     public Result VerificarCrearReserva() => Verificar(permisos.PuedeCrearReserva(usuarioActual.Rol));
 
+    /// <summary>AUTH-002: el solicitante solo cancela la suya; coordinador y administrador, todas.</summary>
+    public Result VerificarCancelar(Guid solicitanteId, Guid usuarioActualId) =>
+        Verificar(permisos.PuedeCancelarReserva(usuarioActual.Rol, solicitanteId, usuarioActualId));
+
     public Result VerificarAprobar() => Verificar(permisos.PuedeAprobar(usuarioActual.Rol));
 
     public Result VerificarCompletar() => Verificar(permisos.PuedeCompletar(usuarioActual.Rol));

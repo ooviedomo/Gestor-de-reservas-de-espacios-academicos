@@ -44,6 +44,7 @@ public static class DependencyInjection
 
         // Command pattern: un manejador por caso de uso de reservas y usuarios.
         services.AddScoped<CrearReserva>();
+        services.AddScoped<CancelarReserva>();
         services.AddScoped<RegistrarSolicitante>();
         services.AddScoped<CrearUsuarioPrivilegiado>();
         services.AddScoped<CambiarRolUsuario>();

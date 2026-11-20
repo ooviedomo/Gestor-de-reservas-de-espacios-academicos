@@ -8,8 +8,8 @@ using ReservaEspacios.Infrastructure.Reservas;
 namespace ReservaEspacios.UnitTests.Disponibilidad;
 
 /// <summary>
-/// ADR-002 / tarea 3.1: el Decorator de escritura invalida la caché de disponibilidad
-/// solo cuando la mutación se persistió correctamente.
+/// ADR-002 / tareas 3.1 y 3.4: el Decorator de escritura invalida la caché de
+/// disponibilidad solo cuando la mutación se persistió correctamente.
 /// </summary>
 public sealed class InvalidarCacheReservaDecoratorTests
 {
@@ -41,6 +41,30 @@ public sealed class InvalidarCacheReservaDecoratorTests
             .ThrowsAsync(new InvalidOperationException("Fallo de persistencia"));
 
         var act = () => _sut.AddAsync(Nueva());
+
+        await act.Should().ThrowAsync<InvalidOperationException>();
+        _cache.Verify(x => x.Invalidar(It.IsAny<Guid>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task TC_DISP_INV_003_Actualizacion_exitosa_invalida_la_cache_del_espacio()
+    {
+        var reserva = Nueva();
+
+        await _sut.UpdateAsync(reserva);
+
+        _inner.Verify(x => x.UpdateAsync(reserva, It.IsAny<CancellationToken>()), Times.Once);
+        _cache.Verify(x => x.Invalidar(reserva.SpaceId), Times.Once);
+    }
+
+    [Fact]
+    public async Task TC_DISP_INV_004_Fallo_de_actualizacion_no_invalida_la_cache()
+    {
+        _inner.Setup(x => x.UpdateAsync(
+                It.IsAny<Reservation>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Fallo de persistencia"));
+
+        var act = () => _sut.UpdateAsync(Nueva());
 
         await act.Should().ThrowAsync<InvalidOperationException>();
         _cache.Verify(x => x.Invalidar(It.IsAny<Guid>()), Times.Never);

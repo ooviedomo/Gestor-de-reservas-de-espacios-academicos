@@ -101,6 +101,18 @@ public static class ApiEndpoints
                 : Error(resultado.ErrorCode);
         });
 
+        app.MapPost("/api/reservas/{reservaId:guid}/cancelacion", async (
+            Guid reservaId,
+            CancelarReservaRequest body,
+            CancelarReserva cancelar) =>
+        {
+            var resultado = await cancelar.HandleAsync(
+                new CancelarReservaCommand(reservaId, body.Motivo));
+            return resultado.IsSuccess
+                ? Results.Ok(new { id = reservaId })
+                : Error(resultado.ErrorCode);
+        });
+
         app.MapPost("/api/reservas/{reservaId:guid}/aprobacion", (
             Guid reservaId,
             GuardiaOperacionesProtegidas guardia) =>
@@ -144,3 +156,7 @@ public static class ApiEndpoints
         new { mensaje },
         statusCode: StatusCodes.Status501NotImplemented);
 }
+
+/// <summary>Cuerpo de la cancelación: el identificador viaja en la ruta (tarea 3.4).</summary>
+public sealed record CancelarReservaRequest(string Motivo);
+
