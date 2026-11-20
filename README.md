@@ -95,6 +95,8 @@ Cada clase de integración usa un esquema PostgreSQL propio. No se requiere Dock
 
 ## Documentación final
 
+- [Informe final](INFORME_FINAL.md): análisis de resultados, dificultades, decisiones
+  modificadas y conclusiones sobre el uso de SDD.
 - [Verificación y cierre — Fase 5](docs/VERIFICACION-FINAL.md): entorno, comandos,
   resultados de pruebas y cobertura, matriz requisito → spec → código → prueba e
   inventario de los siete *changes* archivados.
