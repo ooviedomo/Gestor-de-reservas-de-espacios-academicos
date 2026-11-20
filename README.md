@@ -93,8 +93,23 @@ dotnet test
 
 Cada clase de integración usa un esquema PostgreSQL propio. No se requiere Docker.
 
-## Decisiones
+## Documentación final
 
-Las decisiones de arquitectura están en `docs/adr/`. El plan original, no modificado,
-está en `PLAN_INGENIERIA.md`; los cambios posteriores se documentan en los `design.md`
-de `openspec/changes/`.
+- [Verificación y cierre — Fase 5](docs/VERIFICACION-FINAL.md): entorno, comandos,
+  resultados de pruebas y cobertura, matriz requisito → spec → código → prueba e
+  inventario de los siete *changes* archivados.
+- Trazabilidad por módulo: [`docs/TRAZABILIDAD-ESPACIOS-DISPONIBILIDAD.md`](docs/TRAZABILIDAD-ESPACIOS-DISPONIBILIDAD.md),
+  [`docs/TRAZABILIDAD-RESERVAS-APROBACIONES.md`](docs/TRAZABILIDAD-RESERVAS-APROBACIONES.md),
+  [`docs/TRAZABILIDAD-INTERFAZ-ACCESO.md`](docs/TRAZABILIDAD-INTERFAZ-ACCESO.md) y
+  [`docs/TRAZABILIDAD-NOTIFICACIONES-AUDITORIA-REPORTES.md`](docs/TRAZABILIDAD-NOTIFICACIONES-AUDITORIA-REPORTES.md).
+- Decisiones: [`docs/adr/ADR-001-trazabilidad.md`](docs/adr/ADR-001-trazabilidad.md),
+  [`ADR-002`](docs/adr/ADR-002-patrones-de-diseno.md),
+  [`ADR-003`](docs/adr/ADR-003-entorno-de-pruebas.md) y
+  [`ADR-004 — índice de cierre`](docs/adr/ADR-004-decisiones-de-cierre.md).
+- [`docs/REGISTRO-USO-IA.md`](docs/REGISTRO-USO-IA.md): prompts representativos,
+  salidas y verificación aplicada.
+
+El plan original, no modificado, está en `PLAN_INGENIERIA.md`; las decisiones posteriores
+viven en los ADR y en los `design.md` de `openspec/changes/archive/`. Playwright (§5.1) y
+GitHub Actions (§5.3) quedan registrados como desviación pendiente en `ADR-004`; no se
+añadieron dependencias ni secretos para este cierre.

@@ -108,8 +108,8 @@ Los nombres son los de los métodos de prueba en `tests/`.
 | --- | --- |
 | Cuatro horas exactas | `TC_RES_005_Cuatro_horas_exactas_crea_la_reserva` (unitaria del agregado e integración HTTP) |
 | Más de cuatro horas | `TC_RES_005_Mas_de_cuatro_horas_devuelve_DURACION_MAXIMA_EXCEDIDA` (unitaria del agregado, unitaria del comando e integración HTTP) |
-| Límite aplicado a todos los espacios | `TC_RES_005_Mas_de_cuatro_horas_devuelve_DURACION_MAXIMA_EXCEDIDA` (el invariante del agregado no depende de `EspacioTipo`) |
-| Sin efecto retroactivo | `TC_RES_004_Filtro_por_estado`, `TC_RES_004_Vista_envia_los_filtros_al_consultar`; sin migración ni cancelación automática |
+| Límite aplicado a todos los espacios | `TC_RES_005_Mas_de_cuatro_horas_devuelve_DURACION_MAXIMA_EXCEDIDA`: el constructor de `Reservation` no recibe `EspacioTipo`, así que el invariante es independiente del tipo (no hay prueba paramétrica por tipo) |
+| Sin efecto retroactivo | **GAP documentado**: no hay prueba automatizada; el mapeo anterior a `TC_RES_004_Filtro_por_estado` y `TC_RES_004_Vista_envia_los_filtros_al_consultar` se retira porque solo cubren filtros. Garantizado por diseño: constructor privado usado por EF al materializar, sin migración, backfill ni cancelación automática. Ver `docs/VERIFICACION-FINAL.md` §8 |
 | Código visible en la UI | `TC_RES_005_Formulario_alta_muestra_DURACION_MAXIMA_EXCEDIDA` |
 | Orden de errores | `TC_RES_005_Rango_inverso_de_mas_de_cuatro_horas_mantiene_RANGO_INVALIDO` |
 
@@ -173,3 +173,12 @@ décimo patrón de ADR-002 porque el repositorio de reservas lo reutiliza en est
 - `dotnet test ReservaEspacios.sln`: **374** pruebas superadas (215 unitarias, 59 bUnit, 100 integración).
 - Cobertura consolidada (coverlet + ReportGenerator): **95.2%** de líneas (5210/5467) y **79.5%** de ramas (729/916). Por ensamblado: Application 96.6%, Domain 98.1%, Infrastructure 96.4%, Web 88.7%.
 - `openspec validate add-limite-duracion-reserva --strict` y `openspec validate --all --strict`: válidos.
+
+### Verificación final Fase 5 (2026-11-20)
+
+Solución completa reejecutada: **374** pruebas (215 unitarias, 100 integración, 59 bUnit),
+cobertura **95.2%** de líneas (5210/5467) y **79.5%** de ramas (729/916), build 0/0,
+formato sin cambios y `openspec validate --all --strict`: 10/10 specs válidos. Las cifras
+anteriores se conservan como registro de cada change. El único GAP de esta auditoría es
+el escenario «sin efecto retroactivo» de `RES-005`, detallado en
+[`VERIFICACION-FINAL.md`](VERIFICACION-FINAL.md) §8.

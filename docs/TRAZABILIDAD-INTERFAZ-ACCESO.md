@@ -2,7 +2,9 @@
 
 Verificación de la tarea 7.1: cada requisito `UI-001`…`UI-004` del delta tiene al menos
 un escenario vinculado a una prueba ejecutable. Los nombres son los de los métodos de
-prueba en `tests/`.
+prueba en `tests/`. `UI-005` y `UI-006`, añadidos después por
+`fix-salida-y-historial-reservas`, se documentan al final para completar la matriz de
+interfaz en la Fase 5.
 
 ## UI-001 — Portada y navegación por rol
 
@@ -38,6 +40,29 @@ se duplica en Razor.
 | Escenario del spec | Pruebas |
 | --- | --- |
 | Cerrar sesión | `TC_UI_002_004_Login_cookie_portada_autenticada_y_logout` (cookie → portada autenticada → logout → menú anónimo) |
+| Endpoint JSON heredado | `TC_UI_002_004_Login_cookie_portada_autenticada_y_logout` (estado 200 y sin redirección; observación: no asevera el cuerpo `{"cerrada":true}`) |
+
+## UI-005 — Formato de fecha y hora (change `fix-salida-y-historial-reservas`)
+
+| Escenario del spec | Pruebas |
+| --- | --- |
+| Hora `HH:mm` y fecha en columnas separadas | `TC_UI_005_Vistas_muestran_hora_HH_mm_y_fecha_separada` |
+| Zona `America/Bogota` y nulos | `TC_UI_005_Formatea_hora_fecha_y_fecha_hora_en_zona_bogota`, `TC_UI_005_Valores_nulos_muestran_guion` |
+| Formulario de alta | `TC_UI_005_Formulario_alta_anuncia_el_formato_HH_mm` |
+| Formulario de disponibilidad | `TC_UI_005_Formulario_disponibilidad_anuncia_el_formato_HH_mm` |
+| Enlaces de auditoría y reportes según rol | `TC_UI_005_Rol_privilegiado_ve_enlaces_de_auditoria_y_reporte`, `TC_UI_005_Solicitante_no_ve_enlaces_de_auditoria_ni_reporte` |
+
+Formateador centralizado en `src/ReservaEspacios.Web/FormatoFechaHora.cs`; sin patrón nuevo de ADR-002.
+
+## UI-006 — Cancelación desde el historial (change `fix-salida-y-historial-reservas`)
+
+| Escenario del spec | Pruebas |
+| --- | --- |
+| Botón solo en reserva propia y cancelable | `TC_UI_006_Solicitante_ve_cancelar_solo_en_reserva_propia_cancelable` |
+| Cancelar con motivo y recargar | `TC_UI_006_Solicitante_cancela_con_motivo_y_recarga_el_historial` |
+| Motivo obligatorio | `TC_UI_006_Motivo_obligatorio_no_envia_el_comando` |
+
+Reutiliza `CancelarReservaCommand` y el guard de propiedad/estado; no añade patrón ni dependencia.
 
 ## Patrones aplicados (ADR-002)
 
@@ -59,3 +84,11 @@ No se añaden patrones nuevos ni dependencias NuGet.
   Por ensamblado: Application 95.0% (723/761), Domain 92.6% (316/341),
   Infrastructure 96.0% (1901/1980), Web 89.4% (627/701).
 - `openspec validate add-interfaz-de-acceso-y-navegacion --strict`: válido.
+
+### Verificación final Fase 5 (2026-11-20)
+
+Solución completa reejecutada: **374** pruebas (215 unitarias, 100 integración, 59 bUnit),
+cobertura **95.2%** de líneas (5210/5467) y **79.5%** de ramas (729/916), build 0/0,
+formato sin cambios y `openspec validate --all --strict`: 10/10 specs válidos. Las cifras
+anteriores se conservan como registro del change. Detalle en
+[`VERIFICACION-FINAL.md`](VERIFICACION-FINAL.md).

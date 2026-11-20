@@ -74,3 +74,11 @@ de prueba en `tests/`.
 - `dotnet test ReservaEspacios.sln`: 59 pruebas superadas (39 unitarias, 14 integración, 6 bUnit).
 - Cobertura de líneas consolidada (coverlet + reportgenerator): **91.7%** (649/707).
 - `openspec validate add-espacios-y-disponibilidad --strict`: válido.
+
+### Verificación final Fase 5 (2026-11-20)
+
+Solución completa reejecutada: **374** pruebas (215 unitarias, 100 integración, 59 bUnit),
+cobertura **95.2%** de líneas (5210/5467) y **79.5%** de ramas (729/916), build 0/0,
+formato sin cambios y `openspec validate --all --strict`: 10/10 specs válidos. La cifra
+anterior se conserva como registro del change. Detalle en
+[`VERIFICACION-FINAL.md`](VERIFICACION-FINAL.md).

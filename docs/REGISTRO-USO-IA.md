@@ -1,7 +1,7 @@
 # Registro de uso de IA
 
 - **Proyecto:** `ReservaEspacios`
-- **Alcance:** fases 2, 3 y 4 (revisión de especificaciones, implementación asistida, gestión de cambios y cierre del change `add-reservas-y-aprobaciones`), changes `add-interfaz-de-acceso-y-navegacion`, `add-notificaciones-auditoria-y-reportes`, `fix-login-cookie-interactive-server`, `fix-salida-y-historial-reservas` y `add-limite-duracion-reserva`
+- **Alcance:** fases 2, 3, 4 y 5 (revisión de especificaciones, implementación asistida, gestión de cambios, verificación y cierre), changes `add-interfaz-de-acceso-y-navegacion`, `add-notificaciones-auditoria-y-reportes`, `fix-login-cookie-interactive-server`, `fix-salida-y-historial-reservas`, `add-limite-duracion-reserva` y documentación final (`ADR-004`, `VERIFICACION-FINAL.md`)
 - **Base:** `PLAN_INGENIERIA.md` §6.3–6.5. Este documento **no modifica** el plan; las decisiones nuevas están en `docs/adr/` y en el `design.md` del change.
 - **Estado:** aprobación del estudiante **PENDIENTE** (ver §4).
 
@@ -41,6 +41,8 @@ Los prompts siguientes son **representativos**: parafrasean las instrucciones re
 | P-28 | Fase 4 / spec | «Gestiona como cambio OpenSpec la regla de no reservar más de cuatro horas consecutivas; interpreta la regla por reserva individual y haz primero un commit de los artefactos» | `openspec/changes/add-limite-duracion-reserva/` con `RES-005`, `design.md`, `tasks.md` y commit `a7e1a2b` | `openspec validate add-limite-duracion-reserva --strict`: válido; sin editar `PLAN_INGENIERIA.md` |
 | P-29 | Fase 4 / dominio y regresiones | «Implementa el límite como invariante de Reservation con DURACION_MAXIMA_EXCEDIDA, sin añadir un validador a la cadena, y cubre la frontera de 4 h en dominio, comando, endpoint y UI» | `DomainErrors.DuracionMaximaExcedida`, invariante en `Reservation`, `ReservaDuracionTests` y regresiones en las tres suites de pruebas | 7 pruebas nuevas en verde; `RANGO_INVALIDO` sigue teniendo prioridad para rangos inversos |
 | P-30 | Fase 4 / cierre | «Actualiza trazabilidad y registro de IA, verifica formato/build/suite/cobertura y sincroniza y archiva el change sin pushear» | `docs/TRAZABILIDAD-RESERVAS-APROBACIONES.md`, este documento, spec principal sincronizada y change archivado | 374 pruebas; cobertura 95.2% líneas / 79.5% ramas; `openspec validate --all --strict`: 11/11 válidos |
+| P-31 | Fase 5 / verificación | «Repite formato, build, suite completa con PostgreSQL local, cobertura y validación de OpenSpec; consolida los resultados sin añadir Playwright ni CI» | `docs/VERIFICACION-FINAL.md` con comandos, cifras reales y matriz de los 33 requisitos | 374 pruebas (215 unitarias, 100 integración, 59 bUnit); cobertura 95.2% líneas / 79.5% ramas; `openspec validate --all --strict`: 10/10 specs |
+| P-32 | Fase 5 / cierre | «Registra las decisiones técnicas cambiantes en ADR-004, completa la trazabilidad de UI-005/UI-006 y enlaza la documentación final desde README, sin tocar la aprobación» | `docs/adr/ADR-004-decisiones-de-cierre.md`, matrices actualizadas y `README.md` | Sin cambios de comportamiento, sin dependencias nuevas y sin modificar `PLAN_INGENIERIA.md` |
 
 ## 2. Salidas rechazadas o corregidas durante la revisión
 
@@ -67,15 +69,17 @@ Los prompts siguientes son **representativos**: parafrasean las instrucciones re
 | `design.md` afirmaba que solo se concedían `GRANT INSERT/SELECT` | La migración usa `REVOKE ... FROM PUBLIC` y trigger porque el usuario es propietario | Alinear el `design.md` con la migración sin editar `PLAN_INGENIERIA.md` |
 | Añadir `ValidadorDuracionMaxima` a la cadena de creación | Duplicaba la regla en la cadena y en el agregado, con dos fuentes de verdad y posible evasión por otras vías | Invariante único en el constructor de `Reservation`, según `design.md` de Fase 4 |
 | Ejecutar `dotnet test` de varios proyectos en paralelo | `MSB3026`/`CS2012`: DLL bloqueada por `VBCSCompiler` | Ejecutar la solución en secuencia con `-m:1` |
+| Trazabilidad de `RES-005`: «sin efecto retroactivo» apoyado en pruebas de filtros de `RES-004` | Auditoría Fase 5: `TC_RES_004_Filtro_por_estado` y `TC_RES_004_Vista_envia_los_filtros_al_consultar` no cubren una reserva previa de más de cuatro horas | Retirar el mapeo y documentar el GAP en `VERIFICACION-FINAL.md` §8; no añadir pruebas porque el alcance elegido fue consolidar las existentes |
 
 ## 3. Verificación global aplicada a todo el código generado
 
-- **Revisión humana del diff** antes de cada commit (`5455661`, `2cf104b`, `35346fb`, `725c2ce`, `9be23f4`, `0a6f902`, `a45b2b3`, los del change de interfaz, `a7e1a2b` y los del change actual).
+- **Revisión humana del diff** antes de cada commit (`5455661`, `2cf104b`, `35346fb`, `725c2ce`, `9be23f4`, `0a6f902`, `a45b2b3`, los del change de interfaz, `a7e1a2b`, `afc0331`, `efb4758` y los de Fase 5).
 - `dotnet build`: 0 advertencias, 0 errores.
 - `dotnet format --verify-no-changes --no-restore`: sin cambios.
-- `dotnet test`: **374** pruebas superadas (215 unitarias, 59 bUnit, 100 integración).
+- `dotnet test`: **374** pruebas superadas (215 unitarias, 59 bUnit, 100 integración), ejecutadas de nuevo en Fase 5 con `-m:1`.
 - Cobertura consolidada (coverlet + ReportGenerator): **95.2%** de líneas (5210/5467); ramas 79.5% (729/916), por encima del umbral del 80% de la tarea 5.1.
-- `openspec validate add-reservas-y-aprobaciones --strict`, `openspec validate add-interfaz-de-acceso-y-navegacion --strict`, `openspec validate add-notificaciones-auditoria-y-reportes --strict`, `openspec validate fix-login-cookie-interactive-server --strict`, `openspec validate fix-salida-y-historial-reservas --strict` y `openspec validate add-limite-duracion-reserva --strict`: válidos. `openspec validate --all --strict`: 11/11 válidos.
+- `openspec validate add-reservas-y-aprobaciones --strict`, `openspec validate add-interfaz-de-acceso-y-navegacion --strict`, `openspec validate add-notificaciones-auditoria-y-reportes --strict`, `openspec validate fix-login-cookie-interactive-server --strict`, `openspec validate fix-salida-y-historial-reservas --strict` y `openspec validate add-limite-duracion-reserva --strict`: válidos. `openspec validate --all --strict`: 11/11 válidos durante Fase 4 y 10/10 specs tras el archivado.
+- Fase 5: sin Playwright ni CI (desviación registrada en `ADR-004`); decisiones consolidadas en `docs/adr/ADR-004-decisiones-de-cierre.md` y resultados en `docs/VERIFICACION-FINAL.md`.
 - Migraciones de EF Core revisadas: `btree_gist`, `EXCLUDE ... WHERE estado IN ('PENDIENTE','APROBADA')`, columnas `asistentes`, `motivo_rechazo`, `completado_en`, `ultimo_error`, índices de auditoría y trigger `audit_logs_inmutable`.
 - Dependencias: sin paquetes añadidos a la stack del plan §3.2.
 - Trazabilidad requisito → prueba: `docs/TRAZABILIDAD-ESPACIOS-DISPONIBILIDAD.md`, `docs/TRAZABILIDAD-RESERVAS-APROBACIONES.md`, `docs/TRAZABILIDAD-INTERFAZ-ACCESO.md` y `docs/TRAZABILIDAD-NOTIFICACIONES-AUDITORIA-REPORTES.md`.

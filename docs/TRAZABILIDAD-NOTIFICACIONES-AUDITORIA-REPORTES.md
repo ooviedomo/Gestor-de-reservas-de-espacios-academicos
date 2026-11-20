@@ -98,3 +98,11 @@ y se documentan en `docs/TRAZABILIDAD-RESERVAS-APROBACIONES.md`.
 - `openspec validate add-notificaciones-auditoria-y-reportes --strict`: válido.
 - Migración `20261120162035_NotificacionesAuditoriaYReportes` aplicada en `reservaespacios_test` (fixture) y en `reservaespacios` (desarrollo).
 - Sin dependencias NuGet nuevas; credenciales solo en user-secrets/variables de entorno (ADR-003).
+
+### Verificación final Fase 5 (2026-11-20)
+
+Solución completa reejecutada: **374** pruebas (215 unitarias, 100 integración, 59 bUnit),
+cobertura **95.2%** de líneas (5210/5467) y **79.5%** de ramas (729/916), build 0/0,
+formato sin cambios y `openspec validate --all --strict`: 10/10 specs válidos. Las cifras
+anteriores se conservan como registro del change. Detalle en
+[`VERIFICACION-FINAL.md`](VERIFICACION-FINAL.md).
