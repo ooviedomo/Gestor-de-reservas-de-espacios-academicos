@@ -16,5 +16,8 @@ node_modules/
 .DS_Store
 Thumbs.db
 
+# Harness-provided agent skills
+.agents/
+
 # Local secrets
 .env
