@@ -2,7 +2,7 @@
 
 ## 1. Persistencia y permisos
 
-- [ ] 1.1 Crear la migración de `notifications` —con la columna adicional `ultimo_error`— y `audit_logs` con índices por reserva, entidad, actor y fecha, y verificar que la migración se aplica sobre PostgreSQL con Testcontainers.
+- [ ] 1.1 Crear la migración de `notifications` —con la columna adicional `ultimo_error`— y `audit_logs` con índices por reserva, entidad, actor y fecha, y verificar que la migración se aplica sobre PostgreSQL local (`reservaespacios_test`, según ADR-003).
 - [ ] 1.2 Restringir los permisos de `audit_logs` a `INSERT`/`SELECT` para el usuario de aplicación y verificar que un intento de `UPDATE`/`DELETE` falla (`TC-AUD-001-*`).
 
 ## 2. Notificaciones

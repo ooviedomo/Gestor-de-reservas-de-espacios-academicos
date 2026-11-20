@@ -3,14 +3,14 @@
 ## 1. Estructura y persistencia
 
 - [ ] 1.1 Crear `ReservaEspacios.sln` y los proyectos `Domain`, `Application`, `Infrastructure` y `Web`, y verificar que `dotnet build` termina sin errores.
-- [ ] 1.2 Agregar los paquetes EF Core 10, Npgsql, xUnit, bUnit, WebApplicationFactory y Testcontainers.NET, y verificar que `dotnet restore` completa correctamente.
+- [ ] 1.2 Agregar los paquetes EF Core 10, Npgsql, xUnit, bUnit y WebApplicationFactory —sin Testcontainers.NET, según ADR-003—, y verificar que `dotnet restore` completa correctamente.
 - [ ] 1.3 Crear la migración de `spaces` con índice único en `nombre`, `CHECK (hora_apertura < hora_cierre)` y columna `activo`, y verificar con una prueba de integración que se rechazan nombre duplicado y horario inválido (ESP-001).
 
 ## 2. Dominio y casos de uso de espacios
 
 - [ ] 2.1 Implementar la entidad `Space` y el value object `HorarioAtencion` con las validaciones de ESP-001, y verificar las pruebas unitarias `TC-ESP-001-*`.
 - [ ] 2.2 Implementar `RegistrarSpace`, `EditarSpace`, `DesactivarSpace` y `ReactivarSpace` según ESP-002, y verificar con pruebas unitarias que desactivar un espacio conserva sus reservas futuras simuladas.
-- [ ] 2.3 Implementar la consulta de catálogo con filtros por tipo, capacidad mínima y estado según ESP-003 —incluido el filtro de estado restringido a `Coordinador`/`Administrador`—, y verificar `TC-ESP-003-*` sobre PostgreSQL con Testcontainers.NET.
+- [ ] 2.3 Implementar la consulta de catálogo con filtros por tipo, capacidad mínima y estado según ESP-003 —incluido el filtro de estado restringido a `Coordinador`/`Administrador`—, y verificar `TC-ESP-003-*` sobre PostgreSQL local (`reservaespacios_test`, según ADR-003).
 - [ ] 2.4 Crear el componente Razor de administración de espacios y verificar con bUnit que el formulario muestra `NOMBRE_DUPLICADO`, `CAPACIDAD_INVALIDA` y `HORARIO_INVALIDO`.
 - [ ] 2.5 Verificar con bUnit que al desactivar un espacio con reservas futuras se muestra el aviso de conservación y la operación se confirma (ESP-002).
 

@@ -8,7 +8,7 @@
 
 ## 2. Persistencia de reservas y anti-solape
 
-- [ ] 2.1 Crear la entidad `Reservation` y la migración de `reservations` con `tstzrange`, índice `btree_gist`, restricción `no_overlap` y las columnas `asistentes`, `motivo_rechazo` y `completado_en`, y verificar que una inserción solapada falla en PostgreSQL con Testcontainers.
+- [ ] 2.1 Crear la entidad `Reservation` y la migración de `reservations` con `tstzrange`, índice `btree_gist`, restricción `no_overlap` y las columnas `asistentes`, `motivo_rechazo` y `completado_en`, y verificar que una inserción solapada falla en PostgreSQL local (`reservaespacios_test`, según ADR-003).
 - [ ] 2.2 Implementar la máquina de estados en `Domain` con la matriz de transiciones —incluido `APROBADA → COMPLETADA`— y verificar `TC-APR-001-*` y `TC-COM-001-*` de transición inválida.
 - [ ] 2.3 Mapear la violación de la restricción a `SOLAPE_DETECTADO` en `Application` y verificar que el cliente recibe ese código y no un error SQL crudo; unificar toda transición no permitida bajo `TRANSICION_INVALIDA`.
 

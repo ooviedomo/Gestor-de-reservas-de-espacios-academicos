@@ -46,7 +46,7 @@ Los patrones adoptados en este change (ver `docs/adr/ADR-002-patrones-de-diseno.
 
 ## Risks / Trade-offs
 
-- **[Riesgo] `btree_gist` no disponible en el entorno de pruebas.** → Mitigación: Testcontainers usa imagen PostgreSQL oficial y la migración crea la extensión antes que la restricción.
+- **[Riesgo] `btree_gist` no disponible en el entorno de pruebas.** → Mitigación: la instancia local de PostgreSQL 19 (ADR-003) tiene disponible `btree_gist` y la migración crea la extensión antes que la restricción.
 - **[Riesgo] Error 23514/23P01 de PostgreSQL mal traducido al usuario.** → Mitigación: mapear la violación de `no_overlap` a `SOLAPE_DETECTADO` en la capa de aplicación.
 - **[Trade-off] La tabla `reservations` acopla este change con `disponibilidad`.** → Mitigación: `ConsultarDisponibilidad` consume la misma interfaz definida en el change anterior; no se duplica la regla.
 
