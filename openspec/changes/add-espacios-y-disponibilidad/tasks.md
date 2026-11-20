@@ -8,7 +8,7 @@
 
 ## 2. Dominio y casos de uso de espacios
 
-- [ ] 2.1 Implementar la entidad `Space` y el value object `HorarioAtencion` con las validaciones de ESP-001, y verificar las pruebas unitarias `TC-ESP-001-*`.
+- [x] 2.1 Implementar la entidad `Space` y el value object `HorarioAtencion` con las validaciones de ESP-001, y verificar las pruebas unitarias `TC-ESP-001-*`.
 - [ ] 2.2 Implementar `RegistrarSpace`, `EditarSpace`, `DesactivarSpace` y `ReactivarSpace` según ESP-002, y verificar con pruebas unitarias que desactivar un espacio conserva sus reservas futuras simuladas.
 - [ ] 2.3 Implementar la consulta de catálogo con filtros por tipo, capacidad mínima y estado según ESP-003 —incluido el filtro de estado restringido a `Coordinador`/`Administrador`—, y verificar `TC-ESP-003-*` sobre PostgreSQL local (`reservaespacios_test`, según ADR-003).
 - [ ] 2.4 Crear el componente Razor de administración de espacios y verificar con bUnit que el formulario muestra `NOMBRE_DUPLICADO`, `CAPACIDAD_INVALIDA` y `HORARIO_INVALIDO`.
