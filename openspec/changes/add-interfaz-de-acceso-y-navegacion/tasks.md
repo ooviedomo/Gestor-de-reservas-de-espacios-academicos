@@ -29,4 +29,4 @@
 
 ## 7. Cierre del change
 
-- [ ] 7.1 Ejecutar build, format y todas las pruebas; verificar cobertura ≥ 80%, generar la matriz de trazabilidad, actualizar el registro de uso de IA, commitear y archivar el change.
+- [x] 7.1 Ejecutar build, format y todas las pruebas; verificar cobertura ≥ 80%, generar la matriz de trazabilidad, actualizar el registro de uso de IA, commitear y archivar el change.
