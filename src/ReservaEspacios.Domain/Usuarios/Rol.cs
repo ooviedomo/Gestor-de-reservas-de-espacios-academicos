@@ -43,4 +43,32 @@ public static class RolExtensions
         "ADMINISTRADOR" => Rol.Administrador,
         _ => null
     };
+
+    // AUTH-001/002/003: matriz canónica. Toda acción no otorgada explícitamente
+    // se deniega por defecto en el Guard correspondiente.
+    public static bool PuedeCrearReserva(this Rol rol) => rol == Rol.Solicitante;
+
+    public static bool PuedeCancelarReservaPropia(this Rol rol) => rol == Rol.Solicitante;
+
+    public static bool PuedeCancelarReservaAjena(this Rol rol) =>
+        rol is Rol.Coordinador or Rol.Administrador;
+
+    public static bool PuedeVerHistorialCompleto(this Rol rol) =>
+        rol is Rol.Coordinador or Rol.Administrador;
+
+    public static bool PuedeAprobarReserva(this Rol rol) =>
+        rol is Rol.Coordinador or Rol.Administrador;
+
+    public static bool PuedeCompletarReserva(this Rol rol) =>
+        rol is Rol.Coordinador or Rol.Administrador;
+
+    public static bool PuedeAdministrarEspacios(this Rol rol) => rol == Rol.Administrador;
+
+    public static bool PuedeAdministrarUsuarios(this Rol rol) => rol == Rol.Administrador;
+
+    public static bool PuedeConsultarAuditoria(this Rol rol) =>
+        rol is Rol.Coordinador or Rol.Administrador;
+
+    public static bool PuedeConsultarReportes(this Rol rol) =>
+        rol is Rol.Coordinador or Rol.Administrador;
 }

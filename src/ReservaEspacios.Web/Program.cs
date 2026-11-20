@@ -5,6 +5,7 @@ using ReservaEspacios.Application.Disponibilidad;
 using ReservaEspacios.Infrastructure;
 using ReservaEspacios.Infrastructure.Identity;
 using ReservaEspacios.Infrastructure.Persistence;
+using ReservaEspacios.Web;
 using ReservaEspacios.Web.Components;
 using ReservaEspacios.Web.Security;
 
@@ -39,7 +40,7 @@ builder.Services
     .AddRoles<ApplicationRole>()
     .AddDefaultTokenProviders();
 
-builder.Services.AddScoped<IUsuarioActual, UsuarioActualStub>();
+builder.Services.AddScoped<IUsuarioActual, IdentityRoleAdapter>();
 
 var app = builder.Build();
 
@@ -60,6 +61,8 @@ app.UseAntiforgery();
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
+app.MapApiEndpoints();
 
 app.MapGet("/api/disponibilidad", async (
     Guid spaceId,

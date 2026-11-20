@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using ReservaEspacios.Application.Autorizacion;
 using ReservaEspacios.Application.Disponibilidad;
 using ReservaEspacios.Application.Espacios;
 using ReservaEspacios.Application.Facade;
@@ -10,10 +11,20 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
-        services.AddScoped<IRegistrarSpace, RegistrarSpace>();
-        services.AddScoped<IEditarSpace, EditarSpace>();
-        services.AddScoped<IDesactivarSpace, DesactivarSpace>();
-        services.AddScoped<IReactivarSpace, ReactivarSpace>();
+        // Strategy de permisos y Decorator de autorización sobre la administración
+        // de espacios (AUTH-001/003). Los casos de uso concretos siguen sin conocer
+        // quién los invoca, por lo que sus pruebas unitarias no cambian.
+        services.AddScoped<IEvaluadorPermisos, EvaluadorPermisos>();
+        services.AddScoped<GuardiaOperacionesProtegidas>();
+        services.AddScoped<RegistrarSpace>();
+        services.AddScoped<EditarSpace>();
+        services.AddScoped<DesactivarSpace>();
+        services.AddScoped<ReactivarSpace>();
+        services.AddScoped<GuardiasAdministracionEspacios>();
+        services.AddScoped<IRegistrarSpace>(sp => sp.GetRequiredService<GuardiasAdministracionEspacios>());
+        services.AddScoped<IEditarSpace>(sp => sp.GetRequiredService<GuardiasAdministracionEspacios>());
+        services.AddScoped<IDesactivarSpace>(sp => sp.GetRequiredService<GuardiasAdministracionEspacios>());
+        services.AddScoped<IReactivarSpace>(sp => sp.GetRequiredService<GuardiasAdministracionEspacios>());
         services.AddScoped<IConsultarCatalogo, ConsultarCatalogo>();
         services.AddScoped<IConsultarDisponibilidad, ConsultarDisponibilidad>();
         services.AddScoped<IReservaEspaciosFacade, ReservaEspaciosFacade>();

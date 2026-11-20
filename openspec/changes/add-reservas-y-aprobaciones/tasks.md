@@ -4,7 +4,7 @@
 
 - [x] 1.1 Configurar ASP.NET Core Identity con email como nombre de usuario y semilla de los roles `SOLICITANTE`, `COORDINADOR` y `ADMINISTRADOR` con sus etiquetas `Solicitante`, `Coordinador de espacios` y `Administrador del sistema`, y verificar que la migración inserta exactamente tres roles.
 - [x] 1.2 Implementar autorregistro de `Solicitante`, administración de usuarios y autenticación, y verificar `TC-USR-001-*`, `TC-USR-002-*` y `TC-USR-003-*`.
-- [ ] 1.3 Implementar los guards de autorización según la matriz completa de `autorizacion/spec.md` y verificar `TC-AUTH-001-*` con `WebApplicationFactory`, incluyendo el rechazo de acceso anónimo, que el coordinador no administre espacios ni cree reservas y que el administrador no cree reservas.
+- [x] 1.3 Implementar los guards de autorización según la matriz completa de `autorizacion/spec.md` y verificar `TC-AUTH-001-*` con `WebApplicationFactory`, incluyendo el rechazo de acceso anónimo, que el coordinador no administre espacios ni cree reservas y que el administrador no cree reservas.
 
 ## 2. Persistencia de reservas y anti-solape
 
