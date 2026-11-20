@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\ReservaEspacios.Domain\ReservaEspacios.Domain.csproj" />
+    <ProjectReference Include="..\ReservaEspacios.Application\ReservaEspacios.Application.csproj" />
+    <ProjectReference Include="..\ReservaEspacios.Infrastructure\ReservaEspacios.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+  </PropertyGroup>
+
+</Project>

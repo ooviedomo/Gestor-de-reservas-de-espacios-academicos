@@ -2,7 +2,7 @@
 
 ## 1. Estructura y persistencia
 
-- [ ] 1.1 Crear `ReservaEspacios.sln` y los proyectos `Domain`, `Application`, `Infrastructure` y `Web`, y verificar que `dotnet build` termina sin errores.
+- [x] 1.1 Crear `ReservaEspacios.sln` y los proyectos `Domain`, `Application`, `Infrastructure` y `Web`, y verificar que `dotnet build` termina sin errores.
 - [ ] 1.2 Agregar los paquetes EF Core 10, Npgsql, xUnit, bUnit y WebApplicationFactory —sin Testcontainers.NET, según ADR-003—, y verificar que `dotnet restore` completa correctamente.
 - [ ] 1.3 Crear la migración de `spaces` con índice único en `nombre`, `CHECK (hora_apertura < hora_cierre)` y columna `activo`, y verificar con una prueba de integración que se rechazan nombre duplicado y horario inválido (ESP-001).
 
