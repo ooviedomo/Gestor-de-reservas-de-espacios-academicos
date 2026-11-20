@@ -38,3 +38,17 @@ El sistema MUST permitir consultar el reporte de ocupación únicamente al `Coor
 - **GIVEN** un usuario autenticado como `Solicitante`
 - **WHEN** solicita el reporte de ocupación
 - **THEN** se rechaza con `NO_AUTORIZADO`
+
+### Requirement: REP-003 Cálculo del porcentaje de ocupación
+
+El denominador del porcentaje MUST ser `(hora_cierre − hora_apertura) × número de días naturales del rango`, interpretado en `America/Bogota`. Las `horas reservadas` MUST calcularse como la unión de los intervalos de las reservas contabilizadas, sin duplicar franjas solapadas. Feriados y días no hábiles quedan fuera del alcance de este change y se registran como supuesto en `design.md`.
+
+#### Scenario: Denominador por días del rango
+- **GIVEN** un espacio con horario `08:00–18:00` y un rango de 2 días naturales
+- **WHEN** se genera el reporte
+- **THEN** el denominador es 20 horas
+
+#### Scenario: Intervalos solapados no se duplican
+- **GIVEN** una reserva `COMPLETADA` de `10:00–11:00` y una `APROBADA` de `10:30–11:30` en el mismo espacio
+- **WHEN** se genera el reporte
+- **THEN** las horas reservadas contabilizadas son 1,5 y no 2

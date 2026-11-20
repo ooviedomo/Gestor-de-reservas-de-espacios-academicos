@@ -8,7 +8,7 @@ Conserva un registro inmutable de las acciones sensibles del sistema para que la
 
 ### Requirement: AUD-001 Registro inmutable de acciones sensibles
 
-El sistema MUST insertar un registro de auditoría con entidad, identificador, acción, actor y marca de tiempo para el alta de usuarios, el cambio de roles y la creación, aprobación, rechazo o cancelación de reservas. El registro MUST ser de solo inserción: el sistema MUST NO permitir actualizarlo ni eliminarlo.
+El sistema MUST insertar un registro de auditoría con entidad, identificador, acción, actor —almacenado como identificador de usuario y mostrado con su nombre y rol— y marca de tiempo para el alta de usuarios, el cambio de roles y la creación, aprobación, rechazo, cancelación o completado de reservas. El registro MUST ser de solo inserción: el sistema MUST NO permitir actualizarlo ni eliminarlo.
 
 #### Scenario: Registro de aprobación
 - **GIVEN** una reserva aprobada por el coordinador

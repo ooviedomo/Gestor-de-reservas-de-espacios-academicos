@@ -2,7 +2,9 @@
 
 ## Context
 
-Los changes previos dejaron creados `espacios`, `disponibilidad`, `usuarios`, `autorizacion`, `reservas` y `aprobaciones`. Las transiciones de estado ya existen, por lo que este change no las modifica: solo reacciona a ellas y agrega consultas de auditoría y ocupación. Ver `proposal.md` para la motivación.
+Los changes previos dejaron creados `espacios`, `disponibilidad`, `usuarios`, `autorizacion`, `reservas`, `aprobaciones` y `completado`. Las transiciones de estado ya existen, por lo que este change no las modifica: solo reacciona a ellas y agrega consultas de auditoría y ocupación. Ver `proposal.md` para la motivación.
+
+Nota de alcance: el plan §1.2 pide "notificar sobre el estado", pero se notifican solo las transiciones a `APROBADA`, `RECHAZADA` y `CANCELADA` (`NOT-001`). La creación en `PENDIENTE` **no** genera correo; el propio spec lo hace explícito para evitar supuestos.
 
 ## Goals / Non-Goals
 
@@ -19,10 +21,12 @@ Los changes previos dejaron creados `espacios`, `disponibilidad`, `usuarios`, `a
 
 ## Decisions
 
-- **Patrón outbox con `IHostedService`.** El caso de uso inserta en `notifications` dentro de la misma transacción que cambia el estado; un worker independiente lee pendientes y envía. Alternativa descartada: llamar al SMTP desde el caso de uso, que acopla latencia y fallos externos a la reserva.
+- **Patrón outbox con `IHostedService`.** El caso de uso inserta en `notifications` dentro de la misma transacción que cambia el estado, de modo que reserva y notificación se confirman o se rechazan juntas; el envío y sus reintentos los hace un worker independiente, y su fallo nunca revierte la reserva. Alternativa descartada: llamar al SMTP desde el caso de uso, que acopla latencia y fallos externos a la reserva.
+- **Columna `ultimo_error` en `notifications`.** El esquema del plan §3.3 no contempla dónde guardar el motivo de un envío fallido; se añade `ultimo_error` para cumplir `NOT-002`. Alternativa descartada: registrar el error solo en logs de aplicación, que no permite inspeccionar la notificación.
 - **Reintentos con límite de 5 intentos y error final.** El worker incrementa `intentos` y usa retroceso exponencial simple. Alternativa descartada: reintentos infinitos, que ocultan fallos de configuración.
 - **`audit_logs` append-only.** Solo se concede `INSERT` y `SELECT` al rol de aplicación; no existe comando de actualización o borrado en el repositorio. Alternativa descartada: borrado lógico con columna `eliminado`, que permite alterar el histórico.
-- **Reporte calculado con `GROUP BY` sobre `reservations`.** Se filtran estados `APROBADA` y `COMPLETADA` y se divide entre el horario de atención del espacio. Alternativa descartada: tabla de contadores que se desincronizaría al cancelar.
+- **Reporte calculado con `GROUP BY` sobre `reservas`.** Se filtran estados `APROBADA` y `COMPLETADA`; el denominador es `(cierre − apertura) × días naturales del rango` en `America/Bogota` y las horas se suman como unión de intervalos para no duplicar solapes entre una reserva `COMPLETADA` y una `APROBADA`. Alternativa descartada: tabla de contadores que se desincronizaría al cancelar.
+- **Supuesto: feriados y días no hábiles fuera del alcance.** El plan §2.3 menciona parámetros de feriados, pero no existe un capability de configuración en estos changes; el reporte usa días naturales y el supuesto queda registrado aquí conforme a §5.2 del plan. Alternativa descartada: inventar una tabla de feriados sin especificación revisada.
 - **Acceso al reporte mediante la política de `autorizacion`.** No se crea un mecanismo de permisos paralelo. Alternativa descartada: validar el rol dentro del controlador del reporte.
 
 ## Risks / Trade-offs

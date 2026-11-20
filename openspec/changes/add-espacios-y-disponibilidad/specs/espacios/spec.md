@@ -44,6 +44,11 @@ El sistema MUST permitir editar los atributos de un espacio y desactivarlo. Un e
 - **WHEN** se desactiva el espacio
 - **THEN** deja de aparecer en el catálogo y en nuevas consultas de disponibilidad, y la reserva existente se mantiene
 
+#### Scenario: Aviso al desactivar con reservas futuras
+- **GIVEN** el espacio `Sala de Cómputo 2` tiene una reserva futura en estado `APROBADA`
+- **WHEN** se desactiva el espacio desde la interfaz de administración
+- **THEN** la interfaz muestra un aviso de que las reservas existentes se conservan, y la desactivación se confirma
+
 #### Scenario: Reactivación
 - **GIVEN** un espacio desactivado
 - **WHEN** se reactiva
@@ -51,7 +56,7 @@ El sistema MUST permitir editar los atributos de un espacio y desactivarlo. Un e
 
 ### Requirement: ESP-003 Catálogo filtrable
 
-El sistema MUST devolver el catálogo de espacios activos y MUST permitir filtrarlo por tipo, capacidad mínima y estado, indicando para cada espacio su nombre, tipo, capacidad y ubicación.
+El sistema MUST devolver por defecto solo el catálogo de espacios activos y MUST permitir filtrarlo por tipo, capacidad mínima y estado, indicando para cada espacio su nombre, tipo, capacidad y ubicación. El filtro por estado que incluye espacios inactivos MUST estar disponible únicamente para el `Administrador del sistema` y el `Coordinador de espacios`; para un `Solicitante` MUST devolver solo espacios activos aunque solicite lo contrario.
 
 #### Scenario: Filtro por tipo
 - **WHEN** se consulta el catálogo con filtro de tipo `SALA_COMPUTO`
@@ -65,3 +70,13 @@ El sistema MUST devolver el catálogo de espacios activos y MUST permitir filtra
 - **GIVEN** un espacio activo y un espacio desactivado
 - **WHEN** se consulta el catálogo sin solicitar explícitamente espacios inactivos
 - **THEN** solo se devuelve el espacio activo
+
+#### Scenario: Filtro de estado para rol de gestión
+- **GIVEN** un espacio activo y un espacio desactivado
+- **WHEN** un `Coordinador de espacios` consulta el catálogo con filtro de estado `INACTIVO`
+- **THEN** se devuelve el espacio desactivado
+
+#### Scenario: Filtro de estado denegado a solicitante
+- **GIVEN** un espacio desactivado
+- **WHEN** un `Solicitante` consulta el catálogo con filtro de estado `INACTIVO`
+- **THEN** no se devuelve ningún espacio inactivo

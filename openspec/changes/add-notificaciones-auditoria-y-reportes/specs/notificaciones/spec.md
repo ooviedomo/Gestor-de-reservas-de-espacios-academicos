@@ -25,6 +25,11 @@ El sistema MUST crear un registro en `notifications` con canal `CORREO`, estado 
 - **WHEN** se cancela
 - **THEN** se crea una notificación `PENDIENTE` para el solicitante
 
+#### Scenario: Creación en PENDIENTE no genera notificación
+- **GIVEN** un solicitante que crea una reserva
+- **WHEN** la reserva queda en estado `PENDIENTE`
+- **THEN** no se crea ninguna notificación; se notifican solo las transiciones a `APROBADA`, `RECHAZADA` o `CANCELADA`
+
 ### Requirement: NOT-002 Envío y reintentos
 
 El sistema MUST intentar enviar las notificaciones `PENDIENTES`, marcarlas como `ENVIADA` cuando el proveedor confirme el envío e incrementar `intentos` manteniéndolas `PENDIENTE` cuando falle, hasta un máximo de 5 intentos, tras los cuales pasan a `ERROR`.
@@ -37,7 +42,7 @@ El sistema MUST intentar enviar las notificaciones `PENDIENTES`, marcarlas como 
 #### Scenario: Fallo temporal
 - **GIVEN** una notificación con `intentos = 0`
 - **WHEN** el proveedor falla una vez
-- **THEN** la notificación sigue `PENDIENTE`, con `intentos = 1` y el error registrado
+- **THEN** la notificación sigue `PENDIENTE`, con `intentos = 1` y el error registrado en `ultimo_error`
 
 #### Scenario: Reintentos agotados
 - **GIVEN** una notificación con `intentos = 4`
@@ -46,7 +51,7 @@ El sistema MUST intentar enviar las notificaciones `PENDIENTES`, marcarlas como 
 
 ### Requirement: NOT-003 Aislamiento de fallos
 
-El sistema MUST NO revertir, modificar ni impedir una transición de estado de reserva cuando el envío de la notificación falla. La reserva y su notificación MUST persistir de forma independiente.
+El sistema MUST NO revertir, modificar ni impedir una transición de estado de reserva cuando el envío de la notificación falla. El registro de la notificación (outbox) MUST insertarse en la misma transacción que el cambio de estado, de modo que ambos persistan o ambos fallen; el envío y sus reintentos MUST ejecutarse de forma independiente, en un proceso aparte.
 
 #### Scenario: Proveedor de correo caído
 - **GIVEN** el proveedor de correo no responde

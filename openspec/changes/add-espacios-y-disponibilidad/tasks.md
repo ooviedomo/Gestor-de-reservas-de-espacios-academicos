@@ -10,13 +10,14 @@
 
 - [ ] 2.1 Implementar la entidad `Space` y el value object `HorarioAtencion` con las validaciones de ESP-001, y verificar las pruebas unitarias `TC-ESP-001-*`.
 - [ ] 2.2 Implementar `RegistrarSpace`, `EditarSpace`, `DesactivarSpace` y `ReactivarSpace` según ESP-002, y verificar con pruebas unitarias que desactivar un espacio conserva sus reservas futuras simuladas.
-- [ ] 2.3 Implementar la consulta de catálogo con filtros por tipo, capacidad mínima y estado según ESP-003, y verificar `TC-ESP-003-*` sobre PostgreSQL con Testcontainers.NET.
+- [ ] 2.3 Implementar la consulta de catálogo con filtros por tipo, capacidad mínima y estado según ESP-003 —incluido el filtro de estado restringido a `Coordinador`/`Administrador`—, y verificar `TC-ESP-003-*` sobre PostgreSQL con Testcontainers.NET.
 - [ ] 2.4 Crear el componente Razor de administración de espacios y verificar con bUnit que el formulario muestra `NOMBRE_DUPLICADO`, `CAPACIDAD_INVALIDA` y `HORARIO_INVALIDO`.
+- [ ] 2.5 Verificar con bUnit que al desactivar un espacio con reservas futuras se muestra el aviso de conservación y la operación se confirma (ESP-002).
 
 ## 3. Disponibilidad
 
 - [ ] 3.1 Definir `IDisponibilidadRepository` con un stub de reservas bloqueantes hasta que exista la tabla `reservations`, y verificar su prueba unitaria de aislamiento.
-- [ ] 3.2 Implementar `ConsultarDisponibilidad` con las reglas DISP-001 y DISP-002 (estados `PENDIENTE`/`APROBADA`, intervalos `[inicio, fin)` y motivos de no disponibilidad), y verificar `TC-DISP-001-*` y `TC-DISP-002-*`.
+- [ ] 3.2 Implementar `ConsultarDisponibilidad` con las reglas DISP-001 y DISP-002 (estados `PENDIENTE`/`APROBADA`, intervalos `[inicio, fin)`, motivos de no disponibilidad y conversión `America/Bogota`→UTC con franjas límite en la hora de cierre), y verificar `TC-DISP-001-*` y `TC-DISP-002-*`.
 - [ ] 3.3 Exponer la consulta de disponibilidad y crear el componente Razor correspondiente, y verificar con `WebApplicationFactory` los resultados `DISPONIBLE`, `ESPACIO_INACTIVO`, `FUERA_DE_HORARIO` y `SOLAPE_CON_RESERVA`.
 
 ## 4. Integración y cierre del change

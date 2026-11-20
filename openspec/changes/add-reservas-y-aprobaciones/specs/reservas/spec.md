@@ -76,11 +76,11 @@ El sistema MUST permitir cancelar solo reservas en estado `PENDIENTE` o `APROBAD
 #### Scenario: Estado terminal
 - **GIVEN** una reserva en estado `RECHAZADA`
 - **WHEN** se intenta cancelar
-- **THEN** se rechaza con `ESTADO_TERMINAL`
+- **THEN** se rechaza con `TRANSICION_INVALIDA`
 
 ### Requirement: RES-004 Historial de reservas
 
-El sistema MUST mostrar el historial de reservas con estado, espacio, fechas, solicitante, actor que aprobó o canceló y marcas de tiempo. El `Solicitante` MUST ver solo sus reservas; el `Coordinador de espacios` y el `Administrador del sistema` MUST ver todas, con filtros por estado, fecha y espacio.
+El sistema MUST mostrar el historial de reservas con estado, espacio, fechas, solicitante, actor que aprobó, rechazó o canceló —identificado por su nombre y rol—, motivo de rechazo o cancelación y marcas de tiempo. El `Solicitante` MUST ver solo sus reservas; el `Coordinador de espacios` y el `Administrador del sistema` MUST ver todas, con filtros por estado, fecha y espacio.
 
 #### Scenario: Solicitante ve solo las suyas
 - **GIVEN** dos reservas de solicitantes distintos
@@ -100,4 +100,9 @@ El sistema MUST mostrar el historial de reservas con estado, espacio, fechas, so
 #### Scenario: Decisión registrada
 - **GIVEN** una reserva aprobada por el coordinador
 - **WHEN** se consulta su historial
-- **THEN** aparecen el actor `Coordinador de espacios` y la fecha de aprobación
+- **THEN** aparecen el actor con su nombre y rol `Coordinador de espacios`, y la fecha de aprobación
+
+#### Scenario: Motivo de rechazo en el historial
+- **GIVEN** una reserva rechazada con el motivo `Espacio en mantención`
+- **WHEN** se consulta su historial
+- **THEN** aparecen el motivo y el actor con su nombre y rol

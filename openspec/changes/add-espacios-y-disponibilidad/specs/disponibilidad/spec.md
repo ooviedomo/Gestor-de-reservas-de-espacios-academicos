@@ -8,7 +8,7 @@ Permite consultar si un espacio académico está libre en una fecha y franja hor
 
 ### Requirement: DISP-001 Consulta de disponibilidad por franja
 
-El sistema MUST permitir consultar la disponibilidad de un espacio para una fecha y un rango `[inicio, fin)`, devolviendo `DISPONIBLE` o `NO_DISPONIBLE` junto con el motivo. Un espacio inactivo MUST devolver `ESPACIO_INACTIVO` y una franja fuera del horario de atención MUST devolver `FUERA_DE_HORARIO`.
+El sistema MUST permitir consultar la disponibilidad de un espacio para una fecha y un rango `[inicio, fin)`, devolviendo `DISPONIBLE` o `NO_DISPONIBLE` junto con el motivo. Un espacio inactivo MUST devolver el motivo `ESPACIO_INACTIVO`. Una franja fuera del horario de atención MUST devolver el motivo `FUERA_DE_HORARIO`.
 
 #### Scenario: Espacio libre
 - **GIVEN** el espacio `Laboratorio A-101` activo, con horario `08:00–18:00` y sin reservas bloqueantes el 20/11/2026
@@ -48,3 +48,17 @@ El sistema MUST considerar como ocupante únicamente una reserva en estado `PEND
 - **GIVEN** una reserva `APROBADA` de `10:00` a `11:00`
 - **WHEN** se consulta la franja `09:30–10:30`
 - **THEN** el resultado es `NO_DISPONIBLE` con motivo `SOLAPE_CON_RESERVA`
+
+### Requirement: DISP-003 Interpretación de zona horaria en el horario de atención
+
+El sistema MUST interpretar las horas de apertura y cierre del espacio en la zona institucional `America/Bogota` y MUST convertirlas a UTC antes de compararlas con la franja solicitada, expresada como `DateTimeOffset`. Una franja que termina exactamente a la hora de cierre MUST considerarse dentro del horario. Una franja que empieza exactamente a la hora de cierre MUST considerarse fuera de él.
+
+#### Scenario: Franja que termina en la hora de cierre
+- **GIVEN** un espacio con horario de atención `08:00–18:00` en zona `America/Bogota`
+- **WHEN** se consulta la franja `17:00–18:00` de ese mismo día
+- **THEN** el resultado es `DISPONIBLE` si no hay reservas bloqueantes
+
+#### Scenario: Franja que empieza en la hora de cierre
+- **GIVEN** un espacio con horario de atención `08:00–18:00` en zona `America/Bogota`
+- **WHEN** se consulta la franja `18:00–19:00` de ese mismo día
+- **THEN** el resultado es `NO_DISPONIBLE` con motivo `FUERA_DE_HORARIO`

@@ -34,3 +34,27 @@ El sistema MUST permitir al `Coordinador de espacios` y al `Administrador del si
 - **GIVEN** un usuario autenticado como `Solicitante`
 - **WHEN** intenta aprobar una reserva `PENDIENTE`
 - **THEN** se rechaza con `NO_AUTORIZADO`
+
+### Requirement: COM-001 Completado de reservas
+
+El sistema MUST permitir al `Coordinador de espacios` y al `Administrador del sistema` completar reservas en estado `APROBADA`, pasándolas a `COMPLETADA`. El sistema MUST completar automáticamente una reserva `APROBADA` cuando su fecha `fin` haya vencido. Ningún otro estado MUST ser transicionable a `COMPLETADA`.
+
+#### Scenario: Completado manual
+- **GIVEN** una reserva en estado `APROBADA`
+- **WHEN** el `Coordinador de espacios` la completa
+- **THEN** pasa a `COMPLETADA` y queda registrada la marca de tiempo de completado
+
+#### Scenario: Completado automático al vencer
+- **GIVEN** una reserva en estado `APROBADA` cuya fecha `fin` ya pasó
+- **WHEN** se ejecuta el proceso de cierre diario
+- **THEN** la reserva pasa a `COMPLETADA` sin intervención de un actor
+
+#### Scenario: Completado desde estado no aprobado
+- **GIVEN** una reserva en estado `PENDIENTE`
+- **WHEN** se intenta completar
+- **THEN** la operación se rechaza con `TRANSICION_INVALIDA`
+
+#### Scenario: Solicitante intenta completar
+- **GIVEN** un usuario autenticado como `Solicitante`
+- **WHEN** intenta completar una reserva `APROBADA`
+- **THEN** la operación se rechaza con `NO_AUTORIZADO`
