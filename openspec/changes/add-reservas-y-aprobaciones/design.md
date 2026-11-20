@@ -30,6 +30,20 @@ Nota de orden: el plan §2.4 lista la creación de reservas antes que los usuari
 - **Historial como proyección de eventos de reserva.** `aprobado_por`, `aprobado_en` y `motivo_cancelacion` se guardan en la propia reserva y se exponen con filtros por rol. Alternativa descartada: reconstructrarlo desde correos.
 - **Extensiones del esquema del plan.** Además de las columnas de `reservations` en el plan §3.3 se añaden `asistentes` (validado contra `spaces.capacidad` en `RES-001`), `motivo_rechazo` (exigido en `APR-001` y visible en `RES-004`) y `completado_en` (para `COM-001`). El actor se persiste como `actor_id` y se muestra como `nombre + rol` en historial y auditoría; el email solo se usa como destinatario de notificaciones. Alternativa descartada: guardar el nombre del actor como texto libre, que quedaría desactualizado tras un cambio de rol.
 
+## Patrones de diseño
+
+Los patrones adoptados en este change (ver `docs/adr/ADR-002-patrones-de-diseno.md`) son:
+
+- **State**: `Reservation` delega `Aprobar`, `Rechazar`, `Cancelar` y `Completar` en las clases concretas `PendienteState`, `AprobadaState`, `RechazadaState`, `CompletadaState` y `CanceladaState`. Materializa la máquina de estados descrita en `Decisions`.
+- **Template Method**: `TransicionStateBase` define el esqueleto `validar actor → verificar transición → aplicar → registrar fecha`, que especializan las clases de estado.
+- **Chain of Responsibility**: los validadores de `CrearReserva` se encadenan como `Rango → EspacioActivo → Horario → Capacidad → Solape` (`RES-001`).
+- **Command**: `ICommand` / `ICommandHandler<T>` para `CrearReserva`, `AprobarReserva`, `RechazarReserva`, `CancelarReserva` y `CompletarReserva`.
+- **Strategy**: `IValidacionPorTipoEspacio` e `IEvaluadorPermisos` encapsulan las reglas que varían por tipo de espacio y por rol (`AUTH-002`, `AUTH-003`).
+- **Observer**: `IDomainEventDispatcher` publica `ReservaAprobada`, `ReservaRechazada`, `ReservaCancelada` y `ReservaCompletada`; los suscriptores de auditoría y outbox se registran en el tercer change.
+- **Adapter**: `IdentityRoleAdapter` traduce los roles de ASP.NET Core Identity a los códigos `SOLICITANTE`/`COORDINADOR`/`ADMINISTRADOR`.
+- **Builder**: `FiltroHistorialBuilder` construye los filtros opcionales de `RES-004`.
+- **Facade**: `IReservaEspaciosFacade` agrupa los casos de uso de reservas y aprobaciones para la UI y los endpoints.
+
 ## Risks / Trade-offs
 
 - **[Riesgo] `btree_gist` no disponible en el entorno de pruebas.** → Mitigación: Testcontainers usa imagen PostgreSQL oficial y la migración crea la extensión antes que la restricción.

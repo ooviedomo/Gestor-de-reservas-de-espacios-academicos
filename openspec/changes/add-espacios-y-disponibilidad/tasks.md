@@ -24,6 +24,7 @@
 
 - [ ] 4.1 Ejecutar `dotnet format` y `dotnet test` completos, y verificar que no hay errores de analyzers y que la cobertura de este change es ≥ 80%.
 - [ ] 4.2 Ejecutar `openspec validate add-espacios-y-disponibilidad` sin errores y verificar que cada requisito `ESP-*` y `DISP-*` tiene al menos un escenario vinculado a una prueba.
+- [ ] 4.3 Verificar que el change aplica `Builder`, `Decorator` y `Facade` según `design.md` y `docs/adr/ADR-002-patrones-de-diseno.md`, y que cada patrón tiene al menos una prueba que lo exercise.
 
 ## Workflow follow-up
 

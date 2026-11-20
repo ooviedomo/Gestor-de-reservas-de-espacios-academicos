@@ -26,6 +26,14 @@ El proyecto `ReservaEspacios` es un monolito modular en C# con Blazor, ASP.NET C
 - **Intervalos semiabiertos `[inicio, fin)` y `DateTimeOffset` en UTC.** Las horas de atención se almacenan como `time` y se interpretan en la zona institucional (`America/Bogota`); antes de compararlas con una franja se convierten a UTC aplicando la zona de la fecha consultada, de modo que un horario de verano no desplace el límite. La conversión a la zona institucional para **visualización** ocurre en la presentación; para **comparación** ocurre en `Domain`. Alternativa descartada: `DateTime` sin offset, ambiguo ante cambios de horario.
 - **Disponibilidad calculada a partir del estado de reservas, aunque las reservas aún no existan en este change.** El caso de uso consulta `reservations` con estado `PENDIENTE` o `APROBADA`; la tabla se creará en el siguiente change, por lo que la implementación deberá dejar el repositorio detrás de una interfaz y devolver `DISPONIBLE` mientras no haya tabla. Alternativa descartada: duplicar un flag de ocupación en `spaces`, que se desincronizaría.
 
+## Patrones de diseño
+
+Los patrones adoptados en este change (ver `docs/adr/ADR-002-patrones-de-diseno.md`) son:
+
+- **Builder**: `FiltroCatalogoBuilder` construye los filtros opcionales de `ESP-003` (tipo, capacidad mínima y estado) sin constructores de múltiples parámetros.
+- **Decorator**: `DisponibilidadCacheDecorator` envuelve `ConsultarDisponibilidad` para cachear por `(space_id, fecha, franja)`; la caché se invalida cuando el siguiente change incorpora la tabla `reservations`.
+- **Facade**: `IReservaEspaciosFacade` expone `ConsultarCatalogo` y `ConsultarDisponibilidad` a los componentes Razor, ocultando los casos de uso internos.
+
 ## Risks / Trade-offs
 
 - **[Riesgo] La disponibilidad cambia entre la consulta y la creación de una reserva.** → Mitigación: el siguiente change MUST revalidar disponibilidad dentro de la transacción de creación; la consulta de este change es informativa.

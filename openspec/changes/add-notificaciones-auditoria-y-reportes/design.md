@@ -29,6 +29,18 @@ Nota de alcance: el plan §1.2 pide "notificar sobre el estado", pero se notific
 - **Supuesto: feriados y días no hábiles fuera del alcance.** El plan §2.3 menciona parámetros de feriados, pero no existe un capability de configuración en estos changes; el reporte usa días naturales y el supuesto queda registrado aquí conforme a §5.2 del plan. Alternativa descartada: inventar una tabla de feriados sin especificación revisada.
 - **Acceso al reporte mediante la política de `autorizacion`.** No se crea un mecanismo de permisos paralelo. Alternativa descartada: validar el rol dentro del controlador del reporte.
 
+## Patrones de diseño
+
+Los patrones adoptados en este change (ver `docs/adr/ADR-002-patrones-de-diseno.md`) son:
+
+- **Command**: `EnviarCorreoCommand` se persiste en `notifications` como outbox y se ejecuta diferidamente desde el `IHostedService`.
+- **Strategy**: `IRetryBackoff` implementa el retroceso exponencial con límite de 5 intentos (`NOT-002`) e `ICalculoOcupacion` el denominador y la unión de intervalos (`REP-003`).
+- **Observer**: los suscriptores `AuditoriaHandler` y `NotificacionOutboxHandler` reaccionan a los eventos de dominio publicados en el change anterior (`AUD-001`, `NOT-001`).
+- **Adapter**: `SmtpEmailSender` implementa `IEmailSender`, de modo que el proveedor externo se sustituye sin tocar los casos de uso.
+- **Decorator**: `LoggingCommandHandler<T>` registra el resultado de cada envío sin modificar el worker.
+- **Builder**: `ReporteBuilder` construye el rango de fechas y el filtro por espacio de `REP-001`.
+- **Facade**: `IReservaEspaciosFacade` añade `ConsultarAuditoria` y `GenerarReporte` a la interfaz existente.
+
 ## Risks / Trade-offs
 
 - **[Riesgo] SMTP mal configurado deja notificaciones acumuladas.** → Mitigación: el worker registra el último error y el estado `ERROR` tras 5 intentos; la operación de reserva nunca se revierte.

@@ -27,6 +27,7 @@
 
 - [ ] 5.1 Ejecutar `dotnet format` y `dotnet test` completos y verificar que no hay errores de analyzers y cobertura ≥ 80%.
 - [ ] 5.2 Ejecutar `openspec validate add-notificaciones-auditoria-y-reportes --strict` sin errores y verificar que cada requisito `NOT-*`, `AUD-*` y `REP-*` (incluido `REP-003`) tiene al menos un escenario vinculado a una prueba.
+- [ ] 5.3 Verificar que el change aplica `Command`, `Strategy`, `Observer`, `Adapter`, `Decorator`, `Builder` y `Facade` según `design.md` y `docs/adr/ADR-002-patrones-de-diseno.md`, y que cada patrón tiene al menos una prueba que lo exercise.
 
 ## Workflow follow-up
 
