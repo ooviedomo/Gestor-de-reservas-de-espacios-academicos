@@ -11,6 +11,7 @@ namespace ReservaEspacios.IntegrationTests;
 /// </summary>
 public sealed class PostgresFixture : IAsyncLifetime
 {
+    private static readonly SemaphoreSlim ExtensionLock = new(1, 1);
     private readonly string _adminConnectionString;
 
     public string SchemaName { get; } = $"test_{Guid.NewGuid():N}";
@@ -35,6 +36,19 @@ public sealed class PostgresFixture : IAsyncLifetime
     {
         await using var connection = new NpgsqlConnection(_adminConnectionString);
         await connection.OpenAsync();
+
+        // Las extensiones son de base de datos, no de esquema: se crea una sola vez en
+        // public para que las migraciones de cada esquema de prueba no compitan (ADR-003).
+        await ExtensionLock.WaitAsync();
+        try
+        {
+            await ExecuteAsync(connection, "CREATE EXTENSION IF NOT EXISTS btree_gist WITH SCHEMA public;");
+        }
+        finally
+        {
+            ExtensionLock.Release();
+        }
+
         await ExecuteAsync(connection, $"DROP SCHEMA IF EXISTS \"{SchemaName}\" CASCADE");
         await ExecuteAsync(connection, $"CREATE SCHEMA \"{SchemaName}\"");
 

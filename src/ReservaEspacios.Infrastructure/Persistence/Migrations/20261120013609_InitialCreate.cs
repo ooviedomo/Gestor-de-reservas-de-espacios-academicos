@@ -13,7 +13,7 @@ namespace ReservaEspacios.Infrastructure.Persistence.Migrations
         {
             // Migration Plan del change: la extensión se necesita en el siguiente change
             // para la restricción de exclusión sobre reservas.
-            migrationBuilder.Sql("CREATE EXTENSION IF NOT EXISTS btree_gist;");
+            migrationBuilder.Sql("CREATE EXTENSION IF NOT EXISTS btree_gist WITH SCHEMA public;");
 
             migrationBuilder.CreateTable(
                 name: "spaces",
