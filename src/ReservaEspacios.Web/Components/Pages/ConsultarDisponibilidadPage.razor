@@ -1,0 +1,87 @@
+@page "/disponibilidad"
+@rendermode InteractiveServer
+@using ReservaEspacios.Application.Disponibilidad
+@using ReservaEspacios.Application.Espacios
+@inject IConsultarDisponibilidad Consultar
+@inject IConsultarCatalogo Catalogo
+
+<h1>Consulta de disponibilidad</h1>
+
+<EditForm Model="formulario" OnValidSubmit="ConsultarAsync">
+    <div>
+        <label for="spaceId">Espacio</label>
+        <InputSelect id="spaceId" @bind-Value="formulario.SpaceId">
+            @foreach (var espacio in espacios)
+            {
+                <option value="@espacio.Id">@espacio.Nombre</option>
+            }
+        </InputSelect>
+    </div>
+    <div>
+        <label for="fecha">Fecha</label>
+        <InputText id="fecha" @bind-Value="formulario.Fecha" />
+    </div>
+    <div>
+        <label for="inicio">Inicio</label>
+        <InputText id="inicio" @bind-Value="formulario.Inicio" />
+    </div>
+    <div>
+        <label for="fin">Fin</label>
+        <InputText id="fin" @bind-Value="formulario.Fin" />
+    </div>
+    <button type="submit" id="consultar">Consultar</button>
+</EditForm>
+
+@if (resultado is not null)
+{
+    <p data-testid="estado">@resultado.Estado</p>
+    <p data-testid="motivo">@resultado.Motivo</p>
+}
+
+@code {
+    private sealed class Formulario
+    {
+        public Guid SpaceId { get; set; }
+        public string Fecha { get; set; } = "2026-11-20";
+        public string Inicio { get; set; } = "10:00";
+        public string Fin { get; set; } = "11:00";
+    }
+
+    private readonly Formulario formulario = new();
+    private IReadOnlyList<SpaceCatalogoDto> espacios = Array.Empty<SpaceCatalogoDto>();
+    private DisponibilidadDto? resultado;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var filtro = new FiltroCatalogoBuilder().Build();
+        var catalogo = await Catalogo.HandleAsync(filtro);
+        espacios = catalogo.IsSuccess
+            ? catalogo.Value ?? Array.Empty<SpaceCatalogoDto>()
+            : Array.Empty<SpaceCatalogoDto>();
+        if (espacios.Count > 0)
+        {
+            formulario.SpaceId = espacios[0].Id;
+        }
+    }
+
+    private async Task ConsultarAsync()
+    {
+        if (!DateOnly.TryParse(formulario.Fecha, out var fecha) ||
+            !TimeOnly.TryParse(formulario.Inicio, out var inicio) ||
+            !TimeOnly.TryParse(formulario.Fin, out var fin))
+        {
+            return;
+        }
+
+        var zona = TimeZoneInfo.FindSystemTimeZoneById("America/Bogota");
+        var inicioLocal = DateTime.SpecifyKind(fecha.ToDateTime(inicio), DateTimeKind.Unspecified);
+        var finLocal = DateTime.SpecifyKind(fecha.ToDateTime(fin), DateTimeKind.Unspecified);
+
+        var respuesta = await Consultar.HandleAsync(new ConsultarDisponibilidadCommand(
+            formulario.SpaceId,
+            new DateTimeOffset(inicioLocal, zona.GetUtcOffset(inicioLocal)),
+            new DateTimeOffset(finLocal, zona.GetUtcOffset(finLocal))));
+
+        resultado = respuesta.IsSuccess ? respuesta.Value : null;
+    }
+}

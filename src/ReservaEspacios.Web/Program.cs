@@ -1,5 +1,6 @@
 using ReservaEspacios.Application;
 using ReservaEspacios.Application.Common;
+using ReservaEspacios.Application.Disponibilidad;
 using ReservaEspacios.Infrastructure;
 using ReservaEspacios.Web.Components;
 using ReservaEspacios.Web.Security;
@@ -36,4 +37,23 @@ app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
+app.MapGet("/api/disponibilidad", async (
+    Guid spaceId,
+    DateTimeOffset inicio,
+    DateTimeOffset fin,
+    IConsultarDisponibilidad consultar,
+    CancellationToken cancellationToken) =>
+{
+    var resultado = await consultar.HandleAsync(
+        new ConsultarDisponibilidadCommand(spaceId, inicio, fin), cancellationToken);
+
+    return resultado.IsSuccess
+        ? Results.Ok(resultado.Value)
+        : Results.NotFound(new { error = resultado.ErrorCode });
+});
+
 app.Run();
+
+/// <summary>Expone el host para WebApplicationFactory en pruebas de integración.</summary>
+public partial class Program { }
+
