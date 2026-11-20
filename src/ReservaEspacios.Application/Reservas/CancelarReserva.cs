@@ -16,7 +16,8 @@ public sealed record CancelarReservaCommand(Guid ReservaId, string Motivo) : ICo
 public sealed class CancelarReserva(
     IReservaRepository repository,
     GuardiaOperacionesProtegidas guardia,
-    IUsuarioActual usuarioActual) : ICommandHandler<CancelarReservaCommand>
+    IUsuarioActual usuarioActual,
+    IDomainEventDispatcher? eventos = null) : ICommandHandler<CancelarReservaCommand>
 {
     public async Task<Result> HandleAsync(
         CancelarReservaCommand command,
@@ -41,8 +42,15 @@ public sealed class CancelarReserva(
 
         try
         {
-            reserva.Cancelar(ActorTransicion.Usuario(usuarioId, usuarioActual.Rol), command.Motivo);
+            var ahora = DateTimeOffset.UtcNow;
+            reserva.Cancelar(
+                ActorTransicion.Usuario(usuarioId, usuarioActual.Rol), command.Motivo, ahora);
             await repository.UpdateAsync(reserva, cancellationToken);
+            await (eventos ?? NullDomainEventDispatcher.Instancia).PublicarAsync(
+                new ReservaCancelada(
+                    reserva.Id, reserva.SpaceId, reserva.UsuarioId, usuarioId, usuarioActual.Rol,
+                    reserva.MotivoCancelacion ?? command.Motivo, ahora),
+                cancellationToken);
             return Result.Success();
         }
         catch (DomainException exception)

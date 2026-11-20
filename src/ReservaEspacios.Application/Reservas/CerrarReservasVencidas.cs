@@ -21,7 +21,9 @@ public interface ICerrarReservasVencidas
 /// automático no tiene usuario. Es idempotente: si otra ejecución ya completó la reserva,
 /// la transición falla y se ignora sin afectar al resto del lote.
 /// </summary>
-public sealed class CerrarReservasVencidas(IReservaRepository repository) : ICerrarReservasVencidas
+public sealed class CerrarReservasVencidas(
+    IReservaRepository repository,
+    IDomainEventDispatcher? eventos = null) : ICerrarReservasVencidas
 {
     public async Task<int> EjecutarAsync(
         DateTimeOffset? ahora = null, CancellationToken cancellationToken = default)
@@ -36,6 +38,11 @@ public sealed class CerrarReservasVencidas(IReservaRepository repository) : ICer
             {
                 reserva.CompletarAutomaticamente(momento);
                 await repository.UpdateAsync(reserva, cancellationToken);
+                await (eventos ?? NullDomainEventDispatcher.Instancia).PublicarAsync(
+                    new ReservaCompletada(
+                        reserva.Id, reserva.SpaceId, reserva.UsuarioId, null, null,
+                        reserva.CompletadoEn ?? momento, Automatico: true, momento),
+                    cancellationToken);
                 completadas++;
             }
             catch (DomainException)

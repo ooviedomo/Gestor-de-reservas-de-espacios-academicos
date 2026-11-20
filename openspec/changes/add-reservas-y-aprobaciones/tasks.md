@@ -29,9 +29,9 @@
 
 ## 5. Integración y cierre del change
 
-- [ ] 5.1 Ejecutar `dotnet format` y `dotnet test` completos y verificar que no hay errores de analyzers y cobertura ≥ 80%.
-- [ ] 5.2 Ejecutar `openspec validate add-reservas-y-aprobaciones --strict` sin errores y verificar que cada requisito `USR-*`, `AUTH-*`, `RES-*`, `APR-*` y `COM-*` tiene al menos un escenario vinculado a una prueba.
-- [ ] 5.3 Verificar que el change aplica `State`, `Template Method`, `Chain of Responsibility`, `Command`, `Strategy`, `Observer`, `Adapter`, `Builder` y `Facade` según `design.md` y `docs/adr/ADR-002-patrones-de-diseno.md`, y que cada patrón tiene al menos una prueba que lo exercise.
+- [x] 5.1 Ejecutar `dotnet format` y `dotnet test` completos y verificar que no hay errores de analyzers y cobertura ≥ 80%.
+- [x] 5.2 Ejecutar `openspec validate add-reservas-y-aprobaciones --strict` sin errores y verificar que cada requisito `USR-*`, `AUTH-*`, `RES-*`, `APR-*` y `COM-*` tiene al menos un escenario vinculado a una prueba en `docs/TRAZABILIDAD-RESERVAS-APROBACIONES.md`.
+- [x] 5.3 Verificar que el change aplica `State`, `Template Method`, `Chain of Responsibility`, `Command`, `Strategy`, `Observer`, `Adapter`, `Builder` y `Facade` según `design.md` y `docs/adr/ADR-002-patrones-de-diseno.md`, y que cada patrón tiene al menos una prueba que lo exercise.
 
 ## Workflow follow-up
 

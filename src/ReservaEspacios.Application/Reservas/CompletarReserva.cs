@@ -15,7 +15,8 @@ public sealed record CompletarReservaCommand(Guid ReservaId) : ICommand;
 public sealed class CompletarReserva(
     IReservaRepository repository,
     GuardiaOperacionesProtegidas guardia,
-    IUsuarioActual usuarioActual) : ICommandHandler<CompletarReservaCommand>
+    IUsuarioActual usuarioActual,
+    IDomainEventDispatcher? eventos = null) : ICommandHandler<CompletarReservaCommand>
 {
     public async Task<Result> HandleAsync(
         CompletarReservaCommand command,
@@ -40,8 +41,14 @@ public sealed class CompletarReserva(
 
         try
         {
-            reserva.Completar(ActorTransicion.Usuario(usuarioId, usuarioActual.Rol));
+            var ahora = DateTimeOffset.UtcNow;
+            reserva.Completar(ActorTransicion.Usuario(usuarioId, usuarioActual.Rol), ahora);
             await repository.UpdateAsync(reserva, cancellationToken);
+            await (eventos ?? NullDomainEventDispatcher.Instancia).PublicarAsync(
+                new ReservaCompletada(
+                    reserva.Id, reserva.SpaceId, reserva.UsuarioId, usuarioId, usuarioActual.Rol,
+                    reserva.CompletadoEn ?? ahora, Automatico: false, ahora),
+                cancellationToken);
             return Result.Success();
         }
         catch (DomainException exception)

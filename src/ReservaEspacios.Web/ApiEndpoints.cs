@@ -97,11 +97,12 @@ public static class ApiEndpoints
                 return Results.BadRequest(new { error = "ESTADO_INVALIDO" });
             }
 
-            var filtro = new FiltroHistorial(
-                Estado: estadoParseado,
-                Desde: desde,
-                Hasta: hasta,
-                SpaceId: spaceId);
+            var filtro = new FiltroHistorialBuilder()
+                .ConEstado(estadoParseado)
+                .Desde(desde)
+                .Hasta(hasta)
+                .ConSpace(spaceId)
+                .Build();
             var resultado = await consultar.HandleAsync(
                 new ConsultarHistorialCommand(filtro), cancellationToken);
 

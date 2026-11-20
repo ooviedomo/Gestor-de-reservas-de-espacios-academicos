@@ -7,6 +7,7 @@ using ReservaEspacios.Application.Facade;
 using ReservaEspacios.Application.Reservas;
 using ReservaEspacios.Application.Reservas.Validacion;
 using ReservaEspacios.Application.Usuarios;
+using ReservaEspacios.Domain.Common;
 
 namespace ReservaEspacios.Application;
 
@@ -18,6 +19,9 @@ public static class DependencyInjection
         // de espacios (AUTH-001/003). Los casos de uso concretos siguen sin conocer
         // quién los invoca, por lo que sus pruebas unitarias no cambian.
         services.AddScoped<IEvaluadorPermisos, EvaluadorPermisos>();
+        // Observer (ADR-002): el despachador se registra aunque este change aún no tenga
+        // suscriptores concretos; auditoría y outbox se añadirán en el tercer change.
+        services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
         services.AddScoped<GuardiaOperacionesProtegidas>();
         services.AddScoped<RegistrarSpace>();
         services.AddScoped<EditarSpace>();

@@ -116,11 +116,12 @@ else
 
     private async Task CargarAsync()
     {
-        var filtro = new FiltroHistorial(
-            Estado: EstadoReservaExtensions.DesdeCodigo(estado),
-            Desde: ParsearFecha(desde),
-            Hasta: ParsearFecha(hasta),
-            SpaceId: Guid.TryParse(spaceId, out var id) ? id : null);
+        var filtro = new FiltroHistorialBuilder()
+            .ConEstado(EstadoReservaExtensions.DesdeCodigo(estado))
+            .Desde(ParsearFecha(desde))
+            .Hasta(ParsearFecha(hasta))
+            .ConSpace(Guid.TryParse(spaceId, out var id) ? id : null)
+            .Build();
 
         var resultado = await Historial.HandleAsync(new ConsultarHistorialCommand(filtro));
         if (resultado.IsSuccess)
